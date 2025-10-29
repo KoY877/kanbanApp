@@ -1,9 +1,9 @@
 package com.kanban.kanbanapp.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
 import com.kanban.kanbanapp.Model.Board;
 
-public interface BoardRepository extends JpaRepository<Board, Long> {
+public interface BoardRepository extends CrudRepository<Board, String> {
     
 }

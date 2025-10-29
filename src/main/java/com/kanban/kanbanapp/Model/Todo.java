@@ -22,8 +22,8 @@ public class Todo {
 
     // Attributes
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "UUID")
+    private String id;
     private String title;
     private String description;
     // private String dueDate;
