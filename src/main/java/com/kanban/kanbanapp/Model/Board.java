@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import jakarta.persistence.OneToMany; 
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.CascadeType; 
 import jakarta.persistence.Entity;
 
@@ -21,11 +22,12 @@ import lombok.Setter;
 @Getter 
 @Setter
 @NoArgsConstructor 
+@Entity
 @Table(name = "boards")
 public class Board {
 
     @Id
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id = "";
     private String name = "";
     private String selectedTask = "";

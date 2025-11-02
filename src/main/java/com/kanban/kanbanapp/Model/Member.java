@@ -5,8 +5,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -25,7 +23,7 @@ import lombok.Setter;
 public class Member {
 
     @Id
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String memberEmail;
     private String role;

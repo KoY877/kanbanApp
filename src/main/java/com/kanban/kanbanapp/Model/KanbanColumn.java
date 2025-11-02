@@ -9,7 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType; 
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.CascadeType; 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -19,19 +19,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-@Getter @Setter
+@Getter 
+@Setter
 @NoArgsConstructor 
 @AllArgsConstructor
 @Entity   
 @Table  (name = "kanban_columns")
 public class KanbanColumn {
     @Id
-   @GeneratedValue(generator = "UUID")
+   @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
  
     private String name;
 
-    private Integer limitWorkInProgress;
+    private Integer limitWork;
 
     @ManyToOne
     @JoinColumn(name = "board_id", nullable = false)
@@ -45,18 +46,18 @@ public class KanbanColumn {
     private List<Todo> addedTodos = new ArrayList<>();
 
     // Constructeur flexible
-    public KanbanColumn(String id, String name, Board board, List<Todo> todos, List<Todo> addedTodos, Integer limitWorkInProgress) {
+    public KanbanColumn(String id, String name, Board board, List<Todo> todos, List<Todo> addedTodos, Integer limitWork) {
         this.id = id;
         this.name = name != null ? name : "";
         this.board = board;
         if (todos != null) this.todos = todos;
         if (addedTodos != null) this.addedTodos = addedTodos;
-        this.limitWorkInProgress = limitWorkInProgress;
+        this.limitWork = limitWork;
     }
 
     // Constructeur pour un seul todo (optionnel)
-    public KanbanColumn(String id, String name, Board board, Todo todo, Integer limitWorkInProgress) {
-        this(id, name, board, todo != null ? List.of(todo) : null, null, limitWorkInProgress);
+    public KanbanColumn(String id, String name, Board board, Todo todo, Integer limitWork) {
+        this(id, name, board, todo != null ? List.of(todo) : null, null, limitWork);
     }
 
     // Constructeur par défaut généré par Lombok (@NoArgsConstructor)

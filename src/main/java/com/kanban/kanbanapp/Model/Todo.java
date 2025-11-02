@@ -22,7 +22,7 @@ public class Todo {
 
     // Attributes
     @Id
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String title;
     private String description;

@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kanban.kanbanapp.Model.Board;
-import com.kanban.kanbanapp.Model.KanbanColumn;
-import com.kanban.kanbanapp.Model.Member;
 import com.kanban.kanbanapp.repository.BoardRepository;
 import com.kanban.kanbanapp.request.AddBoardRequest;
 
