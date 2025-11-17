@@ -5,59 +5,56 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kanban.kanbanapp.Model.Board;
-import com.kanban.kanbanapp.repository.BoardRepository;
-import com.kanban.kanbanapp.request.AddBoardRequest;
 
-import exceptions.BoardNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class boardService implements Inter_boardService {@Override
     public Board addBoard(Board board) {
-        // TODO Auto-generated method stub
+    
         throw new UnsupportedOperationException("Unimplemented method 'addBoard'");
     }
 
     @Override
     public Board getBoardById(Long id) {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'getBoardById'");
     }
 
     @Override
     public Board updateBoard(Long id, Board board) {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'updateBoard'");
     }
 
     @Override
     public void deleteBoard(Long id) {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'deleteBoard'");
     }
 
     @Override
     public List<Board> getAllBoards() {
-        // TODO Auto-generated method stub
+      
         throw new UnsupportedOperationException("Unimplemented method 'getAllBoards'");
     }
 
     @Override
     public List<Board> getBoardsByName() {
-        // TODO Auto-generated method stub
+       
         throw new UnsupportedOperationException("Unimplemented method 'getBoardsByName'");
     }
 
     @Override
     public List<Board> getBoardsByColumnName() {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'getBoardsByColumnName'");
     }
 
     @Override
     public List<Board> getBoardsByMemberName() {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'getBoardsByMemberName'");
     }
     

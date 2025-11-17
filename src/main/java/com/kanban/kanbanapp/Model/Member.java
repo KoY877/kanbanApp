@@ -1,10 +1,16 @@
 package com.kanban.kanbanapp.Model;
 
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -23,13 +29,18 @@ import lombok.Setter;
 public class Member {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
+    @UuidGenerator
+    @JdbcTypeCode(SqlTypes.VARCHAR)    // <— stocké en VARCHAR
+    @Column(length = 36, nullable = false, updatable = false)
     private String id;
+
+   
     private String memberEmail;
     private String role;
 
     @ManyToOne
-    @JoinColumn(name = "board_id", nullable = false)
+    @JsonIgnore
     private Board board;
 
 }
