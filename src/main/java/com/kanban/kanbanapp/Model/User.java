@@ -1,9 +1,11 @@
 package com.kanban.kanbanapp.Model;
 
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.GeneratedValue;
+
+import java.util.Set;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
@@ -24,23 +26,33 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "members")
+@Table(name = "users")
 
-public class Member {
+public class User {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     @UuidGenerator
-    @JdbcTypeCode(SqlTypes.VARCHAR) // <— stocké en VARCHAR
+    @JdbcTypeCode(SqlTypes.VARCHAR) 
     @Column(length = 36, nullable = false, updatable = false)
     private String id;
 
-    private String memberEmail;
-    private String role;
+    @Column (nullable = true)
+    private String username;
 
-    @ManyToOne
-    @JoinColumn(name = "board_id", nullable = false)
+    @Column(unique = true, nullable = false)
+    private String email;
+  
+    @Column(nullable = false)
     @JsonIgnore
-    private Board board;
+    private String password;
+    
+    @Column(length = 36)
+    @JsonIgnore
+    private String secret;
+
+    @OneToMany
+    @JoinColumn(name = "userId")
+    private Set<Board> boards;
 
 }

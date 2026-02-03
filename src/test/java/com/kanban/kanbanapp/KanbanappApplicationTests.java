@@ -1,10 +1,10 @@
-package com.todo.todoapp;
+package com.kanban.kanbanapp;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TodoappApplicationTests {
+class KanbanappApplicationTests {
 
 	@Test
 	void contextLoads() {
