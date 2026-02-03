@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,9 +20,9 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "kanban_columns")
-@Getter 
-@Setter 
-@NoArgsConstructor 
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class KanbanColumn {
 
@@ -39,6 +40,7 @@ public class KanbanColumn {
     private Integer limitWorkInProgress;
 
     @ManyToOne
+    @JoinColumn(name = "board_id", nullable = false)
     @JsonIgnore
     private Board board;
 }

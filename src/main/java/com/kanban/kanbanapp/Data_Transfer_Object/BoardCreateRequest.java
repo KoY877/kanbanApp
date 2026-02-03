@@ -11,6 +11,7 @@ public class BoardCreateRequest {
     private String name;
     private String selectedTask;
     private String globalOption;
+    private String userId;
     private List<ColumnNameDto> columns;
     private List<AddedColumnDto> added_columns;
     private List<MemberDto> members;
