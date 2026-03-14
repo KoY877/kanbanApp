@@ -75,6 +75,7 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    @SuppressWarnings("null")
     @Override
     public void deleteUserBySecret(String secret) {
         // Log the incoming request
@@ -98,7 +99,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User updateUser(String secret, UserCreateRequest request) {
-        // Log the incoming request
+        
         log.info("Updating user with secret: {}", secret);
         // Find user by secret
         Optional<User> userInDB = userRepository.findBySecret(secret);
@@ -121,16 +122,18 @@ public class UserServiceImpl implements UserService {
         
         // Save the updated user
         User updatedUser = userRepository.save(user);
-        // Log the incoming request
+   
         log.info("User updated successfully: {}", updatedUser.getId());
         return updatedUser;
     }
 
+    @SuppressWarnings("null")
     @Override
     @Transactional
     public User patchUser(String secret, Map<String, Object> updates) {
-        // Log the incoming request
+       
         log.info("Patching user with secret: {}", secret);
+
         // Find user by secret
         Optional<User> userInDB = userRepository.findBySecret(secret);
 

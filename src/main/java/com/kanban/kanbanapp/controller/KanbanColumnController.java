@@ -16,21 +16,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @Tag(name = "Columns Controller", description = "APIs for managing columns")
-@CrossOrigin(origins = "http://localhost:4200 , http://localhost:8081")
+@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081" })
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/board/kanban-column")
 @Validated
 
 public class KanbanColumnController {
-    
-    
+
     @Autowired
     private KanbanColumnRepository kanbanColumnRepository;
 
     @Autowired
     private BoardRepository boardRepository;
-
 
     // GET /board -> list all boards
     @Operation(summary = "Get all board columns", description = "Retrieve a list of all board columns")
@@ -61,7 +59,7 @@ public class KanbanColumnController {
         column.setColumnName(Optional.ofNullable(request.getColumnName()).orElse(""));
         column.setLimitWorkInProgress(Optional.ofNullable(request.getLimitWorkInProgress()).orElse(null));
 
-         // Associate with board if boardId is provided
+        // Associate with board if boardId is provided
         if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
             Optional<Board> board = boardRepository.findById(request.getBoardId());
             if (board.isEmpty()) {
@@ -90,14 +88,16 @@ public class KanbanColumnController {
     @SuppressWarnings("null")
     @Operation(summary = "Update a column", description = "Update a column by its ID")
     @PutMapping("/{id}")
-    public ResponseEntity<KanbanColumn> update(@PathVariable("id") String id, @RequestBody KanbanColumnCreateRequest request) {
+    public ResponseEntity<KanbanColumn> update(@PathVariable("id") String id,
+            @RequestBody KanbanColumnCreateRequest request) {
         Optional<KanbanColumn> columnInDb = kanbanColumnRepository.findById(id);
 
         if (columnInDb.isPresent()) {
             KanbanColumn columnToUpdate = columnInDb.get();
             columnToUpdate.setColumnName(
                     Optional.ofNullable(request.getColumnName()).orElse(columnToUpdate.getColumnName()));
-            columnToUpdate.setLimitWorkInProgress(Optional.ofNullable(request.getLimitWorkInProgress()).orElse(columnToUpdate.getLimitWorkInProgress()));
+            columnToUpdate.setLimitWorkInProgress(Optional.ofNullable(request.getLimitWorkInProgress())
+                    .orElse(columnToUpdate.getLimitWorkInProgress()));
 
             // Update board if boardId is provided
             if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
@@ -117,6 +117,7 @@ public class KanbanColumnController {
     }
 
     // PATCH /column?id={id} -> patch a column by id
+
     @SuppressWarnings("null")
     @Operation(summary = "Patch a column", description = "Partially update a column by its ID")
     @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

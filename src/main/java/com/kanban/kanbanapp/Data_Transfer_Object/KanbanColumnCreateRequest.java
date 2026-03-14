@@ -2,9 +2,9 @@ package com.kanban.kanbanapp.Data_Transfer_Object;
 
 import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter 
+@Setter 
+@NoArgsConstructor 
 @AllArgsConstructor
 public class KanbanColumnCreateRequest {
     private String columnName;

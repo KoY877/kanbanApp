@@ -23,7 +23,7 @@ import java.util.*;
 // collectors not used anymore
 
 @Tag(name = "Kanban Controller", description = "APIs for managing Kanban boards")
-@CrossOrigin(origins = "http://localhost:4200 , http://localhost:8081")
+@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081" }, allowCredentials = "true")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/board")
@@ -36,8 +36,16 @@ public class BoardController {
     @Autowired
     private UserRepository userRepository;
 
-    // GET /board -> list all boards
+    // GET /board -> list all boards (without authentication)
     @Operation(summary = "Get all boards", description = "Retrieve a list of all boards")
+    @GetMapping
+    public ResponseEntity<Iterable<Board>> getAllBoards() {
+        Iterable<Board> boards = boardRepository.findAll();
+        return ResponseEntity.ok(boards);
+    }
+
+    // GET /board/all -> list all boards for a specific user
+    @Operation(summary = "Get all boards by user", description = "Retrieve a list of all boards for a specific user")
     @GetMapping("/all")
     public ResponseEntity<Iterable<Board>> getAll(@RequestHeader("api-secret") String secret) {
         // Find user by secret
@@ -190,8 +198,10 @@ public class BoardController {
     // PATCH /board?id={id} -> patch a board by id
     @SuppressWarnings("null")
     @Operation(summary = "Patch a board", description = "Partially update a board by its ID")
-    @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Board> patch(@RequestParam(value = "id") String id,
+
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Board> patch(@PathVariable(value = "id") String id,
+
             @RequestBody Map<String, Object> updates) {
 
         // Find board by id
