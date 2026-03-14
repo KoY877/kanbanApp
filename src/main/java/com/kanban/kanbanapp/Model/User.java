@@ -27,26 +27,25 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-
 public class User {
 
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     @UuidGenerator
-    @JdbcTypeCode(SqlTypes.VARCHAR) 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(length = 36, nullable = false, updatable = false)
     private String id;
 
-    @Column (nullable = true)
+    @Column(nullable = true)
     private String username;
 
     @Column(unique = true, nullable = false)
     private String email;
-  
+
     @Column(nullable = false)
     @JsonIgnore
     private String password;
-    
+
     @Column(length = 36)
     @JsonIgnore
     private String secret;
@@ -54,5 +53,4 @@ public class User {
     @OneToMany
     @JoinColumn(name = "userId")
     private Set<Board> boards;
-
 }

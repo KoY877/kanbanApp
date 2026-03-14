@@ -86,8 +86,9 @@ public class UserController {
     // PUT /user/{secret} -> update a user by secret
     @Operation(summary = "Update a user", description = "Update a user by its secret")
     @PutMapping("/{secret}")
-    public ResponseEntity<User> update(@PathVariable("secret") String secret, @Valid @RequestBody UserCreateRequest request) {
-        
+    public ResponseEntity<User> update(@PathVariable("secret") String secret,
+            @Valid @RequestBody UserCreateRequest request) {
+
         // Log the incoming request
         log.info("Request to update user with secret: {}", secret);
         try {
@@ -104,7 +105,7 @@ public class UserController {
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (username, email, password)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"username\": \"newUsername\", \"email\": \"new@email.com\"}")))
     @PatchMapping(value = "/{secret}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> patch(@PathVariable String secret, @RequestBody Map<String, Object> updates) {
-        
+
         // Log the incoming request
         log.info("Request to patch user with secret: {}", secret);
         try {

@@ -3,9 +3,9 @@ package com.kanban.kanbanapp.Data_Transfer_Object;
 import lombok.*;
 import java.util.List;
 
-@Getter 
-@Setter 
-@NoArgsConstructor 
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class BoardCreateRequest {
     private String name;

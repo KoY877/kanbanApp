@@ -198,8 +198,10 @@ public class BoardController {
     // PATCH /board?id={id} -> patch a board by id
     @SuppressWarnings("null")
     @Operation(summary = "Patch a board", description = "Partially update a board by its ID")
+
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Board> patch(@PathVariable(value = "id") String id,
+
             @RequestBody Map<String, Object> updates) {
 
         // Find board by id
