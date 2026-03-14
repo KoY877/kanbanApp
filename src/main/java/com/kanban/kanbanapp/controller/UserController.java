@@ -19,7 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "User Controller", description = "APIs for managing users")
-@CrossOrigin(origins = "http://localhost:4200 , http://localhost:8081")
+@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081"}, allowCredentials = "true")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")
@@ -40,16 +40,20 @@ public class UserController {
     }
 
     // Get endpoint to fetch a user by email
-    @Operation(summary = "Get user by email and password", description = "Retrieve a user by their email address and password")
     @GetMapping(value = "/validate", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> validate(@RequestParam(value = "email") String email,
             @RequestParam(value = "password") String password) {
 
-        // Log the incoming request
         log.info("Validating user with email: {}", email);
         User user = userService.validateUser(email, password);
         if (user != null) {
-            return ResponseEntity.ok("API Secret: " + user.getSecret());
+            // Retourner à la fois l'API Secret et l'User ID
+            String response = String.format("{\"apiSecret\": \"%s\", \"userId\": \"%s\", \"username\": \"%s\", \"email\": \"%s\"}", 
+                                        user.getSecret(), 
+                                        user.getId(),
+                                        user.getUsername(),
+                                        user.getEmail());
+            return ResponseEntity.ok(response);
         }
         log.warn("User validation failed for email: {}", email);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

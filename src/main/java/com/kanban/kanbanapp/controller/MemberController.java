@@ -1,12 +1,10 @@
 package com.kanban.kanbanapp.controller;
 
 import com.kanban.kanbanapp.Data_Transfer_Object.MemberCreateRequest;
-import com.kanban.kanbanapp.Data_Transfer_Object.UserCreateRequest;
 import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.Member;
 import com.kanban.kanbanapp.repository.BoardRepository;
 import com.kanban.kanbanapp.repository.MemberRepository;
-import com.kanban.kanbanapp.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;

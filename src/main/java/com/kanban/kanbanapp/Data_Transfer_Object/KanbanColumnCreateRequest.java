@@ -1,7 +1,5 @@
 package com.kanban.kanbanapp.Data_Transfer_Object;
 
-import com.kanban.kanbanapp.Model.Board;
-
 import lombok.*; 
 
 @Getter 
