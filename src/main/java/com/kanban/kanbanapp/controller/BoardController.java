@@ -151,14 +151,16 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // DELETE /board?id={id} -> delete a board by id
+    // DELETE /board/{id} -> delete a board by id
     @SuppressWarnings("null")
     @Operation(summary = "Delete a board", description = "Delete a board by its ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") String id) {
+        // Find board by id
+        Optional<Board> boardInDb = boardRepository.findById(id);
         // Check if board exists
-        if (boardRepository.existsById(id)) {
-            boardRepository.deleteById(id);
+        if (boardInDb.isPresent()) {
+            boardRepository.delete(boardInDb.get());
             return ResponseEntity.noContent().build();
         }
 
@@ -170,7 +172,8 @@ public class BoardController {
     @SuppressWarnings("null")
     @Operation(summary = "Update a board", description = "Update a board by its ID")
     @PutMapping("/{id}")
-    public ResponseEntity<Board> update(@PathVariable("id") String id, @RequestBody BoardCreateRequest request) {
+    public ResponseEntity<Board> update(@PathVariable(value = "id") String id,
+            @RequestBody BoardCreateRequest request) {
         // Find board by id
         Optional<Board> boardInDb = boardRepository.findById(id);
 
@@ -195,10 +198,9 @@ public class BoardController {
 
     }
 
-    // PATCH /board?id={id} -> patch a board by id
+    // PATCH /board/{id} -> patch a board by id
     @SuppressWarnings("null")
     @Operation(summary = "Patch a board", description = "Partially update a board by its ID")
-
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Board> patch(@PathVariable(value = "id") String id,
 

@@ -44,14 +44,15 @@ public class MemberController {
     // GET /board/{id} -> get a single member by id
     @SuppressWarnings("null")
     @Operation(summary = "Get member by ID", description = "Retrieve a single member by its ID")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @GetMapping("/{id}")
-    public ResponseEntity<Member> getMemberById(@PathVariable("id") String id) {
+    public ResponseEntity<Member> getMemberById(@PathVariable(value = "id") String id) {
         Optional<Member> memberInDb = memberRepository.findById(id);
         return memberInDb.map(member -> new ResponseEntity<>(member, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // POST /member -> create a new member0
+    // POST /member -> create a new member
     @SuppressWarnings("null")
     @Operation(summary = "Create a new member", description = "Create a new member with specified details")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -62,7 +63,6 @@ public class MemberController {
 
         // Associate with board if boardId is provided
         if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
-            @SuppressWarnings("null")
             Optional<Board> board = boardRepository.findById(request.getBoardId());
             if (board.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -74,11 +74,12 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // DELETE /board?id={id} -> delete a board by id
+    // DELETE /board/member/{id} -> delete a member by id
     @SuppressWarnings("null")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @Operation(summary = "Delete a member", description = "Delete a member by its ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") String id) {
         if (memberRepository.existsById(id)) {
             memberRepository.deleteById(id);
             return ResponseEntity.noContent().build();
@@ -89,8 +90,9 @@ public class MemberController {
     // PUT /board/member/{id} -> update a member by id
     @SuppressWarnings("null")
     @Operation(summary = "Update a member", description = "Update a member by its ID")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
     @PutMapping("/{id}")
-    public ResponseEntity<Member> update(@PathVariable("id") String id, @RequestBody MemberCreateRequest request) {
+    public ResponseEntity<Member> update(@PathVariable(value = "id") String id, @RequestBody MemberCreateRequest request) {
 
         Optional<Member> memberInDb = memberRepository.findById(id);
 
@@ -117,11 +119,12 @@ public class MemberController {
 
     }
 
-    // PATCH /member?id={id} -> patch a member by id
+    // PATCH /member/{id} -> patch a member by id
     @SuppressWarnings("null")
     @Operation(summary = "Patch a member", description = "Partially update a member by its ID")
-    @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Member> patch(@RequestParam(value = "id") String id,
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Member> patch(@PathVariable(value = "id") String id,
            @RequestBody Map<String, Object> updates) {
 
         Optional<Member> memberInDb = memberRepository.findById(id);

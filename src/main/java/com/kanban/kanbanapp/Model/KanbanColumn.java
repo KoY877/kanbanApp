@@ -33,6 +33,7 @@ public class KanbanColumn {
     @Column(length = 36, nullable = false, updatable = false)
     private String id;
 
+    
     @Column(name = "columnName")
     private String columnName;
 

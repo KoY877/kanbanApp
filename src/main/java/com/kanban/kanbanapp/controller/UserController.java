@@ -1,7 +1,10 @@
 package com.kanban.kanbanapp.controller;
 
 import com.kanban.kanbanapp.Data_Transfer_Object.UserCreateRequest;
+import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.User;
+import com.kanban.kanbanapp.repository.BoardRepository;
+import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -29,6 +34,8 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
+    private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
 
     // GET /user -> list all users
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
@@ -70,21 +77,32 @@ public class UserController {
 
     // DELETE /user/{secret} -> delete a user by secret
     @Operation(summary = "Delete a user", description = "Delete a user by its secret")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Secret of the user to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "user-secret-123")))
     @DeleteMapping("/{secret}")
-    public ResponseEntity<Void> delete(@PathVariable String secret) {
-        // Log the incoming request
-        log.info("Request to delete user with secret: {}", secret);
-        try {
-            userService.deleteUserBySecret(secret);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error deleting user: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
+    public void deleteUserBySecret(String secret) {
+        log.info("Deleting user with secret: {}", secret);
+        Optional<User> userInDB = userRepository.findBySecret(secret);
+        
+        if (userInDB.isPresent()) {
+            User user = userInDB.get();
+            
+            // Supprimer tous les boards du user (déclenchera cascade vers columns/members)
+            Set<Board> userBoards = boardRepository.findAllByUserId(user.getId());
+            for (Board board : userBoards) {
+                boardRepository.delete(board);  // Cascade vers KanbanColumn et Member
+            }
+            
+            // Supprimer le user
+            userRepository.delete(user);
+            log.info("User and all associated boards deleted successfully");
+        } else {
+            log.warn("User with secret {} not found", secret);
         }
     }
 
     // PUT /user/{secret} -> update a user by secret
     @Operation(summary = "Update a user", description = "Update a user by its secret")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (username, email, password)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"username\": \"newUsername\", \"email\": \"new@email.com\", \"password\": \"newPassword\"}")))
     @PutMapping("/{secret}")
     public ResponseEntity<User> update(@PathVariable("secret") String secret,
             @Valid @RequestBody UserCreateRequest request) {
@@ -102,7 +120,7 @@ public class UserController {
 
     // PATCH /user/{secret} -> patch a user by secret
     @Operation(summary = "Patch a user", description = "Partially update a user by its secret. Only send the fields you want to update.")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (username, email, password)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"username\": \"newUsername\", \"email\": \"new@email.com\"}")))
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (username, email, password)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"username\": \"newUsername\", \"email\": \"new@email.com\", \"password\": \"newPassword\"}")))
     @PatchMapping(value = "/{secret}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> patch(@PathVariable String secret, @RequestBody Map<String, Object> updates) {
 

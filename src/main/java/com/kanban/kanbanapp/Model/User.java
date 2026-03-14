@@ -13,6 +13,7 @@ import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -43,14 +44,13 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @JsonIgnore
     private String password;
 
     @Column(length = 36)
     @JsonIgnore
     private String secret;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "userId")
     private Set<Board> boards;
 }
