@@ -7,17 +7,20 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,29 +29,70 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "boards")
 public class Board {
 
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)
+    @EqualsAndHashCode.Include
     @Column(length = 36, nullable = false, updatable = false)
     private String id;
 
-    private String userId;
+    @Column(nullable = false)
+    private String name;
 
-    private String name = "";
-    private String selectedTask = "";
-    private String globalOption = "";
+    @Column(length = 500)
+    private String description;
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("board-columns")
+    // relation to User (many-to-one)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
+
+    // relation to KanbanColumn (one-to-many)
+    @OneToMany(
+        mappedBy = "board",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     private List<KanbanColumn> columns = new ArrayList<>();
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("board-members")
+    //  relation to Member (one-to-many)
+    @OneToMany(
+    mappedBy = "board",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true,
+    fetch = FetchType.LAZY
+    )
     private List<Member> members = new ArrayList<>();
 
+    // Helper methods to manage bi-directional relationships
+    public void addColumn(KanbanColumn column) {
+        columns.add(column);
+        column.setBoard(this);
+    }
+
+    //  Helper method to remove a column from the board
+    public void removeColumn(KanbanColumn column) {
+        columns.remove(column);
+        column.setBoard(null);
+    }
+
+    // Helper methods to manage bi-directional relationships for members
+    public void addMember(Member member) {
+        members.add(member);
+        member.setBoard(this);
+    }
+
+    // Helper method to remove a member from the board
+    public void removeMember(Member member) {
+        members.remove(member);
+        member.setBoard(null);
+    }
 }

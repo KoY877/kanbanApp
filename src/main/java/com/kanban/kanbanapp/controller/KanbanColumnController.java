@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @Tag(name = "Columns Controller", description = "APIs for managing columns")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081" })
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/board/kanban-column")
@@ -41,7 +40,6 @@ public class KanbanColumnController {
     }
 
     // GET /board/{id} -> get a single member by id
-    @SuppressWarnings("null")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the column to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "column-id-123")))
     @Operation(summary = "Get Column by ID", description = "Retrieve a single column by its ID")
     @GetMapping("/{id}")
@@ -52,7 +50,6 @@ public class KanbanColumnController {
     }
 
     // POST /kanban-column -> create a new kanban column
-    @SuppressWarnings("null")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Details of the column to create (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"To Do\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Create a new kanban column", description = "Create a new kanban column with specified details")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -75,7 +72,6 @@ public class KanbanColumnController {
     }
 
     // DELETE /board?id={id} -> delete a board by id
-    @SuppressWarnings("null")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the column to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "column-id-123")))
     @Operation(summary = "Delete a column", description = "Delete a column by its ID")
     @DeleteMapping("/{id}")
@@ -88,7 +84,6 @@ public class KanbanColumnController {
     }
 
     // PUT /board/column/{id} -> update a column by id
-    @SuppressWarnings("null")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"New Column Name\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Update a column", description = "Update a column by its ID")
     @PutMapping("/{id}")
@@ -121,8 +116,6 @@ public class KanbanColumnController {
     }
 
     // PATCH /column?id={id} -> patch a column by id
-
-    @SuppressWarnings("null")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"New Column Name\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Patch a column", description = "Partially update a column by its ID")
     @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
