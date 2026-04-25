@@ -6,11 +6,15 @@ import com.kanban.kanbanapp.repository.RefreshTokenRepository;
 import com.kanban.kanbanapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,13 +38,14 @@ public class RefreshTokenService {
      * @return the created RefreshToken
      */
     public RefreshToken createRefreshToken(String userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        String validUserId = java.util.Objects.requireNonNull(userId, "User ID cannot be null");
+        User user = userRepository.findById(validUserId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + validUserId));
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setTokenFamily(UUID.randomUUID().toString()); // ✅ Créer nouvelle famille
+        refreshToken.setTokenFamily(UUID.randomUUID().toString()); // Créer nouvelle famille
         refreshToken.setRevoked(false);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDuration));
         refreshToken.setCreatedDate(Instant.now());
@@ -67,16 +72,18 @@ public class RefreshTokenService {
      * @throws RuntimeException if token is expired
      */
     public RefreshToken verifyExpiration(RefreshToken token) {
-        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
-            refreshTokenRepository.delete(token);
-            throw new RuntimeException("Refresh token expired. Please login again.");
-        }
-        
+
         // Verify if the token is revoked
         if (token.isRevoked()) {
-            throw new SecurityException("Token has been revoked");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token has been revoked");
         }
-        
+
+        // Check if token is expired
+        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+            refreshTokenRepository.delete(token);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired. Please login again.");
+        }
+
         return token;
     }
 
@@ -88,8 +95,9 @@ public class RefreshTokenService {
      */
     @Transactional
     public void deleteByUserId(String userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        String validUserId = java.util.Objects.requireNonNull(userId, "User ID cannot be null");
+        User user = userRepository.findById(validUserId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + validUserId));
         refreshTokenRepository.deleteByUser(user);
     }
 
@@ -106,7 +114,7 @@ public class RefreshTokenService {
 
     /**
      * Rotate refresh token with token family tracking
-     * Detects token reuse attacks
+     * Detects token reuse attacks with grace period for race conditions
      * 
      * @param oldToken the old refresh token to rotate
      * @return the new refresh token
@@ -114,19 +122,45 @@ public class RefreshTokenService {
      */
     @Transactional
     public RefreshToken rotateRefreshToken(RefreshToken oldToken) {
-        // ✅ Verify if the token is already revoked (reuse detected!)
+        // Verify if the token is already revoked
         if (oldToken.isRevoked()) {
-            // ATTACK DETECTED: someone is reusing an old token
-            System.err.println("⚠️ TOKEN REUSE DETECTED! Revoking entire token family: " + oldToken.getTokenFamily());
-            revokeTokenFamily(oldToken.getTokenFamily());
-            throw new SecurityException("Token reuse detected - all tokens in family have been revoked for security");
+            // ✅ AMÉLIORATION: Vérifier si c'est une race condition ou une vraie attaque
+
+            Instant revokedAt = oldToken.getRevokedAt();
+            if (revokedAt != null) {
+                long secondsSinceRevocation = Instant.now().getEpochSecond() - revokedAt.getEpochSecond();
+
+                // ✅ GRACE PERIOD: Si révoqué il y a moins de 30 secondes, c'est probablement
+                // une race condition
+                if (secondsSinceRevocation < 30) {
+                    System.out.println(
+                            "⚠️ Token déjà révoqué il y a " + secondsSinceRevocation + "s - Race condition probable");
+                    System.out.println("   → Rejet de la tentative SANS détruire la famille");
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                            "Token already used - please retry with the new token");
+                }
+
+                // ❌ ATTACK DETECTED: Token révoqué depuis longtemps = vraie attaque
+                System.err.println("🚨 TOKEN REUSE ATTACK DETECTED!");
+                System.err.println("   Token révoqué il y a " + secondsSinceRevocation + "s");
+                System.err.println("   → Révocation de toute la famille: " + oldToken.getTokenFamily());
+                revokeTokenFamily(oldToken.getTokenFamily());
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                        "Token reuse attack detected - all sessions have been terminated for security");
+            }
+
+            // Si revokedAt est null (ne devrait pas arriver), rejeter sans détruire
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token already revoked");
         }
-        
+
+        // ✅ Token valide, procéder à la rotation normale
+        System.out.println("🔄 Rotation du token pour user: " + oldToken.getUser().getEmail());
+
         // Mark the old token as revoked
         oldToken.setRevoked(true);
         oldToken.setRevokedAt(Instant.now());
         refreshTokenRepository.save(oldToken);
-        
+
         // Create new token with the SAME family
         User user = oldToken.getUser();
         RefreshToken newToken = new RefreshToken();
@@ -136,10 +170,13 @@ public class RefreshTokenService {
         newToken.setRevoked(false);
         newToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDuration));
         newToken.setCreatedDate(Instant.now());
-        
-        return refreshTokenRepository.save(newToken);
+
+        RefreshToken savedToken = refreshTokenRepository.save(newToken);
+        System.out.println("✅ Nouveau token créé dans la famille: " + oldToken.getTokenFamily());
+
+        return savedToken;
     }
-    
+
     /**
      * Revoke all tokens in a token family
      * Used when token theft is detected
@@ -151,5 +188,15 @@ public class RefreshTokenService {
         // Simple implementation: delete all tokens in the family
         refreshTokenRepository.deleteByTokenFamily(tokenFamily);
         System.out.println("🔒 Revoked all tokens in family: " + tokenFamily);
+    }
+
+    public void revokeAllByUserId(@NonNull String userId) {
+        List<RefreshToken> tokens = refreshTokenRepository.findByUserId(userId);
+        for (RefreshToken token : tokens) {
+            token.setRevoked(true);
+            token.setRevokedAt(Instant.now());
+        }
+
+        refreshTokenRepository.saveAll(java.util.Objects.requireNonNull(tokens));
     }
 }

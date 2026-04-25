@@ -7,6 +7,7 @@ import com.kanban.kanbanapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -88,10 +89,11 @@ public class UserServiceImpl implements UserService {
     public User roleUser(String userId, Role newRole) {
         log.info("Updating role for user with ID: {}", userId);
 
-        User user = userRepository.findById(userId)
+        String validUserId = java.util.Objects.requireNonNull(userId, "User ID cannot be null");
+        User user = userRepository.findById(validUserId)
                 .orElseThrow(() -> {
-                    log.error("User not found with ID: {}", userId);
-                    return new UserNotFoundException(userId);
+                    log.error("User not found with ID: {}", validUserId);
+                    return new UserNotFoundException(validUserId);
                 });
 
         user.setRole(newRole);
@@ -143,18 +145,19 @@ public class UserServiceImpl implements UserService {
     public void deleteUserById(String userId) {
         log.info("Deleting user with ID: {}", userId);
 
-        User user = userRepository.findById(userId)
+        String validUserId = java.util.Objects.requireNonNull(userId, "User ID cannot be null");
+        User user = userRepository.findById(validUserId)
                 .orElseThrow(() -> {
-                    log.error("User not found with ID: {}", userId);
-                    return new UserNotFoundException(userId);
+                    log.error("User not found with ID: {}", validUserId);
+                    return new UserNotFoundException(validUserId);
                 });
 
-        userRepository.delete(user);
-        log.info("User deleted successfully with ID: {}", userId);
+        userRepository.delete(java.util.Objects.requireNonNull(user));
+        log.info("User deleted successfully with ID: {}", validUserId);
     }
 
     @Override
-    public User updateUser(String userId, User updatedUser) {
+    public User updateUser(@NonNull String userId, @NonNull User updatedUser) {
         log.info("Updating user with ID: {}", userId);
 
         User user = userRepository.findById(userId)
@@ -174,7 +177,7 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
         }
 
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.save(java.util.Objects.requireNonNull(user));
         log.info("User updated successfully with ID: {}", savedUser.getId());
 
         return savedUser;

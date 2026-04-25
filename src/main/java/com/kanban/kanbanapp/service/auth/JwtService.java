@@ -1,14 +1,13 @@
 package com.kanban.kanbanapp.service.auth;
 
 import com.kanban.kanbanapp.Model.User;
-import  com.kanban.kanbanapp.config.JwtProperties;
+import com.kanban.kanbanapp.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -25,25 +24,24 @@ public class JwtService {
 
     private final JwtProperties jwtProperties;
 
-public JwtService(JwtProperties jwtProperties) {
-    this.jwtProperties = jwtProperties;
-}
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
-// Dans getSigningKey(), utiliser directement:
-private SecretKey getSigningKey() {
-    byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
-    return Keys.hmacShaKeyFor(keyBytes);
-}
-
+    // Dans getSigningKey(), utiliser directement:
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     /**
      * Extract all claims from token
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
+                .parseSignedClaims(token)
                 .getPayload();
     }
 
@@ -93,19 +91,23 @@ private SecretKey getSigningKey() {
     public String generateAccessToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
-        claims.put("userId", user.getId());  // AJOUT
+        claims.put("userId", user.getId()); // AJOUT
         claims.put("roles", List.of(user.getRole().name())); // AJOUT
         claims.put("token_type", "ACCESS");
-        
+
         String jti = UUID.randomUUID().toString(); // AJOUT
-        
+
+        Long expirationMs = jwtProperties.getAccessToken().getExpiration();
+        System.out.println(
+                "🔍 DEBUG - Access token expiration: " + expirationMs + " ms (" + (expirationMs / 60000) + " minutes)");
+
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getEmail())
-                .setId(jti)  // AJOUT
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessToken().getExpiration()))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .claims(claims)
+                .subject(user.getEmail())
+                .id(jti)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -116,13 +118,13 @@ private SecretKey getSigningKey() {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("token_type", "REFRESH");
-        
+
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(user.getEmail())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshToken().getExpiration()))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .claims(claims)
+                .subject(user.getEmail())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshToken().getExpiration()))
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -132,7 +134,9 @@ private SecretKey getSigningKey() {
     public boolean validateToken(String token, String userEmail) {
         try {
             final String subject = extractSubject(token);
-            return (subject.equals(userEmail) && !isTokenExpired(token));
+            final Claims claims = extractAllClaims(token);
+
+            return (subject.equals(userEmail) && !isTokenExpired(token) && "ACCESS".equals(claims.get("token_type")));
         } catch (ExpiredJwtException e) {
             System.err.println("Token expired: " + e.getMessage());
             return false;
@@ -159,10 +163,10 @@ private SecretKey getSigningKey() {
             return false;
         }
     }
-    
+
     /**
-    * Extract user ID from token
-    */
+     * Extract user ID from token
+     */
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
     }

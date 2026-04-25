@@ -1,5 +1,7 @@
 package com.kanban.kanbanapp.Data_Transfer_Object;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,4 +27,7 @@ public class AuthResponse {
     private String username;
     
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    private String role;
 }

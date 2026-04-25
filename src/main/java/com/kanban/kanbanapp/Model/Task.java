@@ -13,6 +13,7 @@ import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -89,6 +90,11 @@ public class Task {
     @JoinColumn(name = "column_id", nullable = false)
     @JsonIgnore
     private KanbanColumn column;
+
+    @JsonProperty("columnId")
+    public String getColumnId() {
+        return column != null ? column.getId() : null;
+    }
 
     //  timestamps
     @CreationTimestamp

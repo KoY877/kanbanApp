@@ -2,6 +2,8 @@ package com.kanban.kanbanapp.service.auth;
 
 import java.util.List;
 
+import org.springframework.lang.NonNull;
+
 import com.kanban.kanbanapp.Data_Transfer_Object.RegisterRequest;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.Model.enums.Role;
@@ -17,5 +19,5 @@ public interface UserService {
     
     void deleteUserById(String userId);  
     
-    User updateUser(String userId, User updatedUser);
+    User updateUser(@NonNull String userId, @NonNull User updatedUser);
 }

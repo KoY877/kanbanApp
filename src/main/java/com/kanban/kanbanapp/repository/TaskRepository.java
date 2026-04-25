@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.kanban.kanbanapp.Model.Task;
 
 public interface TaskRepository extends JpaRepository<Task, String> {
-    List<Task> findAllByColumnIdOrderByTaskOrderAsc(String columnId);
+    List<Task> findAllByColumn_IdOrderByTaskOrderAsc(String columnId);
 }

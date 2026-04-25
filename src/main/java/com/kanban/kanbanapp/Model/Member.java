@@ -38,12 +38,13 @@ public class Member {
     @Column(length = 36, nullable = false, updatable = false)
     private String id;
 
-    // email of the member (can be null for invited members who haven't accepted yet)
+    // email of the member (can be null for invited members who haven't accepted
+    // yet)
     @Column(nullable = true)
     private String memberEmail;
-    
+
     // role in the board
-    @Enumerated(EnumType.STRING) 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
@@ -51,9 +52,10 @@ public class Member {
     @Column(nullable = false)
     private Integer memberOrder = 0;
 
-    // relation to User (IMPORTANT)
+    // relation to User (optional — allows inviting non-registered emails)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
+    @JsonIgnore
     private User user;
 
     // relation to Board
@@ -62,5 +64,4 @@ public class Member {
     @JsonIgnore
     private Board board;
 
-   
 }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.UuidGenerator;
@@ -23,6 +24,7 @@ import java.time.Instant;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "refresh_tokens")
+@DynamicUpdate
 public class RefreshToken {
 
     @Id
@@ -34,7 +36,7 @@ public class RefreshToken {
     private String id;
 
     // Relation to User (many-to-one)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER) // ✅ EAGER: User toujours chargé avec le RefreshToken
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;
@@ -45,14 +47,14 @@ public class RefreshToken {
 
     // Links rotated tokens together
     @Column(nullable = false, length = 36)
-    private String tokenFamily;  
+    private String tokenFamily;
 
     // Mark as revoked when rotated
     @Column(nullable = false)
-    private boolean revoked = false;  
+    private boolean revoked = false;
 
     // When it was rotated/revoked
-    private Instant revokedAt;  
+    private Instant revokedAt;
 
     // Expiry date of the refresh token
     @Column(nullable = false)

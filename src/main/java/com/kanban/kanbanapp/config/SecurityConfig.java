@@ -58,7 +58,7 @@ public class SecurityConfig {
         ));
         
         // Permettre les credentials
-        configuration.setAllowCredentials(corsProperties.getAllowCredentials());  // ✅ UTILISER CorsProperties
+        configuration.setAllowCredentials(true);  // ✅ UTILISER CorsProperties
         
         // Cache preflight
         configuration.setMaxAge(corsProperties.getMaxAge().longValue());  // ✅ UTILISER CorsProperties
@@ -84,6 +84,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                     "/auth/**",
+                    "/error",
+                    "/v3/api-docs",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/swagger-ui.html"

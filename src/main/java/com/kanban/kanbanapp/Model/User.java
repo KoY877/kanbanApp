@@ -21,6 +21,8 @@ import com.kanban.kanbanapp.Model.enums.Role;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -66,6 +68,7 @@ public class User {
     private List<Board> boards = new ArrayList<>();
 
     // Add field Role (e.g., USER, ADMIN) if needed for authorization
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.ADMINISTRATOR; 
 

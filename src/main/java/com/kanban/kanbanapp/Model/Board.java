@@ -10,6 +10,7 @@ import org.hibernate.type.SqlTypes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.GeneratedValue;
@@ -61,6 +62,8 @@ public class Board {
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
+    @OrderBy("columnOrder ASC")
+    @JsonIgnore
     private List<KanbanColumn> columns = new ArrayList<>();
 
     //  relation to Member (one-to-many)
@@ -70,6 +73,7 @@ public class Board {
     orphanRemoval = true,
     fetch = FetchType.LAZY
     )
+    @JsonIgnore
     private List<Member> members = new ArrayList<>();
 
     // Helper methods to manage bi-directional relationships

@@ -1,0 +1,51 @@
+{
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret key for JWT token signing"
+    },
+    {
+      "name": "jwt.access-token.expiration",
+      "type": "java.lang.Long",
+      "description": "Access token expiration in milliseconds",
+      "defaultValue": 900000
+    },
+    {
+      "name": "jwt.refresh-token.expiration",
+      "type": "java.lang.Long",
+      "description": "Refresh token expiration in milliseconds",
+      "defaultValue": 604800000
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "CORS allowed origins",
+      "defaultValue": "http://localhost:4200,http://localhost:8081"
+    },
+    {
+      "name": "cors.allowed-methods",
+      "type": "java.lang.String",
+      "description": "CORS allowed methods",
+      "defaultValue": "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    },
+    {
+      "name": "cors.allowed-headers",
+      "type": "java.lang.String",
+      "description": "CORS allowed headers",
+      "defaultValue": "*"
+    },
+    {
+      "name": "cors.allow-credentials",
+      "type": "java.lang.Boolean",
+      "description": "CORS allow credentials",
+      "defaultValue": true
+    },
+    {
+      "name": "cors.max-age",
+      "type": "java.lang.Integer",
+      "description": "CORS max age",
+      "defaultValue": 3600
+    }
+  ]
+}

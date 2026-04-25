@@ -1,10 +1,9 @@
 package com.kanban.kanbanapp.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +27,9 @@ public class TaskService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Task createTask(TaskCreateRequest request) {
-        KanbanColumn column = kanbanColumnRepository.findById(request.getColumnId())
+    public Task createTask(@NonNull TaskCreateRequest request) {
+        String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
+        KanbanColumn column = kanbanColumnRepository.findById(columnId)
             .orElseThrow(() -> new RuntimeException("Column not found"));
 
         Board board = column.getBoard();
@@ -46,26 +46,29 @@ public class TaskService {
         task.setMembers(assignedMembers);
         task.setColumn(column);
 
-        int nextOrder = taskRepository.findAllByColumnIdOrderByTaskOrderAsc(column.getId()).size();
+        int nextOrder = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(column.getId()).size();
         task.setTaskOrder(nextOrder);
 
         return taskRepository.save(task);
     }
 
     @Transactional(readOnly = true)
-    public List<Task> getTasksByColumn(String columnId) {
-        return taskRepository.findAllByColumnIdOrderByTaskOrderAsc(columnId);
+    public List<Task> getTasksByColumn(@NonNull String columnId) {
+        String validColumnId = java.util.Objects.requireNonNull(columnId, "Column ID cannot be null");
+        return taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(validColumnId);
     }
 
     @Transactional(readOnly = true)
-    public Task getTaskById(String taskId) {
-        return taskRepository.findById(taskId)
+    public Task getTaskById(@NonNull String taskId) {
+        String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
+        return taskRepository.findById(validTaskId)
             .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
     @Transactional
-    public void deleteTask(String taskId) {
-        Task task = taskRepository.findById(taskId)
+    public void deleteTask(@NonNull String taskId) {
+        String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
+        Task task = taskRepository.findById(validTaskId)
             .orElseThrow(() -> new RuntimeException("Task not found"));
 
         String columnId = task.getColumn().getId();
@@ -76,11 +79,13 @@ public class TaskService {
     }
 
     @Transactional
-    public Task updateTask(String taskId, TaskCreateRequest request) {
-        Task task = taskRepository.findById(taskId)
+    public Task updateTask(@NonNull String taskId, @NonNull TaskCreateRequest request) {
+        String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
+        Task task = taskRepository.findById(validTaskId)
             .orElseThrow(() -> new RuntimeException("Task not found"));
 
-        KanbanColumn targetColumn = kanbanColumnRepository.findById(request.getColumnId())
+        String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
+        KanbanColumn targetColumn = kanbanColumnRepository.findById(columnId)
             .orElseThrow(() -> new RuntimeException("Column not found"));
 
         Board board = targetColumn.getBoard();
@@ -99,7 +104,7 @@ public class TaskService {
 
         if (!oldColumnId.equals(newColumnId)) {
             task.setColumn(targetColumn);
-            int nextOrder = taskRepository.findAllByColumnIdOrderByTaskOrderAsc(newColumnId).size();
+            int nextOrder = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(newColumnId).size();
             task.setTaskOrder(nextOrder);
         }
 
@@ -113,23 +118,21 @@ public class TaskService {
         return savedTask;
     }
 
+    // Helper methods
     private List<Member> resolveMembers(List<String> memberIds, Board board) {
         if (memberIds == null || memberIds.isEmpty()) {
             return new ArrayList<>();
         }
 
+        // Validate that all member IDs exist and belong to the board
         List<Member> members = memberRepository.findAllById(memberIds);
         if (members.size() != memberIds.size()) {
             throw new RuntimeException("One or more members not found");
         }
 
-        Set<String> boardMemberIds = new HashSet<>();
-        for (Member member : board.getMembers()) {
-            boardMemberIds.add(member.getId());
-        }
-
         for (Member member : members) {
-            if (!boardMemberIds.contains(member.getId())) {
+            // board_id FK is already loaded with the member entity — no lazy load needed
+            if (!member.getBoard().getId().equals(board.getId())) {
                 throw new RuntimeException("Assigned member does not belong to this board");
             }
         }
@@ -138,7 +141,7 @@ public class TaskService {
     }
 
     private void reorderColumnTasks(String columnId) {
-        List<Task> tasks = taskRepository.findAllByColumnIdOrderByTaskOrderAsc(columnId);
+        List<Task> tasks = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(columnId);
         for (int index = 0; index < tasks.size(); index++) {
             tasks.get(index).setTaskOrder(index);
         }

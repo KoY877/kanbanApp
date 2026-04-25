@@ -1,76 +1,66 @@
 package com.kanban.kanbanapp.service.auth;
 
+import com.kanban.kanbanapp.Model.BlacklistedToken;
+import com.kanban.kanbanapp.repository.BlacklistedTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Date;
 
 @Service
 public class TokenBlacklistService {
 
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-    
+    private BlacklistedTokenRepository repository;
+
     @Autowired
     private JwtService jwtService;
     
-    @Value("${jwt.access-token.expiration}")
-    private Long accessTokenExpiration;
-    
-    private static final String BLACKLIST_PREFIX = "blacklist:";
-    
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     /**
-     * Add a token to the blacklist
+     * Blacklist a single token by adding its JTI to the database
      */
     public void blacklistToken(String token) {
         String jti = jwtService.extractJti(token);
         Date expiration = jwtService.extractExpiration(token);
-        long ttl = expiration.getTime() - System.currentTimeMillis();
-        
-        if (ttl > 0) {
-            redisTemplate.opsForValue().set(
-                BLACKLIST_PREFIX + jti, 
-                "revoked", 
-                Duration.ofMillis(ttl)
-            );
-        }
+
+        BlacklistedToken bt = new BlacklistedToken();
+        bt.setJti(jti);
+        bt.setExpiryDate(expiration);
+
+        repository.save(bt);
     }
-    
+
     /**
      * Check if a token is blacklisted
      */
     public boolean isBlacklisted(String token) {
         String jti = jwtService.extractJti(token);
-        return Boolean.TRUE.equals(
-            redisTemplate.hasKey(BLACKLIST_PREFIX + jti)
-        );
+        return repository.existsByJti(jti);
     }
     
     /**
-     * Revoke all tokens for a user (e.g., on password change)
+     * Revoke all tokens for a specific user
+     * This marks all refresh tokens as revoked in the database
      */
-    public void revokeAllUserTokens(String userId) {
-        // Store user ID with TTL equal to max token lifetime
-        redisTemplate.opsForValue().set(
-            "revoked_user:" + userId,
-            String.valueOf(System.currentTimeMillis()),
-            Duration.ofMillis(accessTokenExpiration)
-        );
+    @Transactional
+    public void revokeAllUserTokens(@NonNull String userId) {
+        refreshTokenService.revokeAllByUserId(userId);
     }
     
     /**
-     * Check if all user tokens are revoked
+     * Scheduled cleanup of expired blacklisted tokens
+     * Runs daily at 3:00 AM
      */
-    public boolean areUserTokensRevoked(String userId, Date tokenIssuedAt) {
-        String revokedTime = redisTemplate.opsForValue()
-            .get("revoked_user:" + userId);
-        
-        if (revokedTime == null) return false;
-        
-        long revokeTimestamp = Long.parseLong(revokedTime);
-        return tokenIssuedAt.getTime() < revokeTimestamp;
+    @Scheduled(cron = "0 0 3 * * ?")
+    @Transactional
+    public void cleanupExpiredBlacklistedTokens() {
+        repository.deleteByExpiryDateBefore(new Date());
+        System.out.println("Cleaned up expired blacklisted tokens");
     }
 }
