@@ -38,12 +38,12 @@ public class SecurityConfig {
         
         // Utiliser CorsProperties
         configuration.setAllowedOriginPatterns(
-            Arrays.asList(corsProperties.getAllowedOrigins().split(","))  // ✅ CORRIGER
+            Arrays.asList(corsProperties.getAllowedOrigins().split(","))
         );
         
         // Permettre toutes les méthodes HTTP
         configuration.setAllowedMethods(
-            Arrays.asList(corsProperties.getAllowedMethods().split(","))  // ✅ UTILISER CorsProperties
+            Arrays.asList(corsProperties.getAllowedMethods().split(","))
         );
         
         // Permettre tous les headers
@@ -58,10 +58,10 @@ public class SecurityConfig {
         ));
         
         // Permettre les credentials
-        configuration.setAllowCredentials(true);  // ✅ UTILISER CorsProperties
+        configuration.setAllowCredentials(true);
         
         // Cache preflight
-        configuration.setMaxAge(corsProperties.getMaxAge().longValue());  // ✅ UTILISER CorsProperties
+        configuration.setMaxAge(corsProperties.getMaxAge().longValue());
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -31,7 +31,11 @@ public class KanbanColumnController {
     @Autowired
     private BoardRepository boardRepository;
 
-    // GET /board -> list all boards
+    /**
+     * Retrieve all Kanban columns across all boards.
+     *
+     * @return 200 with the list of columns
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get all board columns", description = "Retrieve a list of all board columns")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -42,7 +46,12 @@ public class KanbanColumnController {
         return ResponseEntity.status(HttpStatus.OK).body(columnsIterable);
     }
 
-    // GET /board/{id} -> get a single member by id
+    /**
+     * Retrieve a single Kanban column by its ID.
+     *
+     * @param id the column UUID
+     * @return 200 with the column, or 404 if not found
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the column to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "column-id-123")))
     @Operation(summary = "Get Column by ID", description = "Retrieve a single column by its ID")
@@ -53,7 +62,15 @@ public class KanbanColumnController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // POST /kanban-column -> create a new kanban column
+    /**
+     * Create a new Kanban column and associate it with a board.
+     * The column order is automatically set to the current column count of that
+     * board.
+     *
+     * @param request creation payload (columnName, limitWorkInProgress, boardId)
+     * @return 201 with the saved column, or 404 if the referenced board does not
+     *         exist
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Details of the column to create (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"To Do\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Create a new kanban column", description = "Create a new kanban column with specified details")
@@ -80,7 +97,12 @@ public class KanbanColumnController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // DELETE /board?id={id} -> delete a board by id
+    /**
+     * Delete a Kanban column by its ID.
+     *
+     * @param id the column UUID
+     * @return 204 on success, or 404 if not found
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the column to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "column-id-123")))
     @Operation(summary = "Delete a column", description = "Delete a column by its ID")
@@ -93,7 +115,13 @@ public class KanbanColumnController {
         return ResponseEntity.notFound().build();
     }
 
-    // PUT /board/column/{id} -> update a column by id
+    /**
+     * Full replacement update of a Kanban column.
+     *
+     * @param id      the column UUID
+     * @param request updated column data (columnName, limitWorkInProgress, boardId)
+     * @return 200 with the updated column, or 404 if not found
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"New Column Name\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Update a column", description = "Update a column by its ID")

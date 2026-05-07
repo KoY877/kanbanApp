@@ -36,7 +36,7 @@ public class RefreshToken {
     private String id;
 
     // Relation to User (many-to-one)
-    @ManyToOne(fetch = FetchType.EAGER) // ✅ EAGER: User toujours chargé avec le RefreshToken
+    @ManyToOne(fetch = FetchType.EAGER) // EAGER: User always loaded with RefreshToken
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;

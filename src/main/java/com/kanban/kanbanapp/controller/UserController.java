@@ -12,9 +12,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;  // ✅ BON IMPORT
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;  // ✅ Pour hasher le password
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +33,7 @@ public class UserController {
 
     private final UserService userService;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;  // ✅ Ajouter pour hasher le password
+    private final PasswordEncoder passwordEncoder;
 
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
@@ -77,7 +77,7 @@ public class UserController {
     public ResponseEntity<User> updateProfile(@PathVariable @NonNull String id, @RequestBody Map<String, String> updates) {
         User user = getAuthenticatedUser();
         
-        // ✅ Mise à jour partielle uniquement des champs fournis
+        // Partial update - only provided fields are updated
         if (updates.containsKey("username") && updates.get("username") != null) {
             user.setUsername(updates.get("username").trim());
         }
@@ -86,7 +86,7 @@ public class UserController {
             user.setEmail(updates.get("email").trim());
         }
         
-        // ✅ Gestion du mot de passe avec hashing
+        // Password handling with hashing
         if (updates.containsKey("password") && updates.get("password") != null) {
             String newPassword = updates.get("password");
             
@@ -102,7 +102,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // ✅ CORRECTION de getAuthenticatedUser()
+    // getAuthenticatedUser()
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();

@@ -31,7 +31,11 @@ public class MemberController {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
 
-    // GET /board -> list all boards
+    /**
+     * Retrieve all board members.
+     *
+     * @return 200 with the list of members
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get all members", description = "Retrieve a list of all members")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -42,7 +46,12 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.OK).body(membersIterable);
     }
 
-    // GET /board/{id} -> get a single member by id
+    /**
+     * Retrieve a single member by its ID.
+     *
+     * @param id the member UUID
+     * @return 200 with the member, or 404 if not found
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get member by ID", description = "Retrieve a single member by its ID")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
@@ -53,7 +62,15 @@ public class MemberController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    // POST /member -> create a new member
+    /**
+     * Create a new member and associate them with a board.
+     * If the given email matches an existing user, the member is linked to that
+     * user.
+     *
+     * @param request creation payload (memberEmail, role, boardId)
+     * @return 201 with the created member, 400 if email is blank, or 404 if the
+     *         board does not exist
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Create a new member", description = "Create a new member with specified details")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -84,7 +101,8 @@ public class MemberController {
             member.setBoard(board.get());
         }
 
-        // Resolve user by email (optional — user_id can be null for unregistered invites)
+        // Resolve user by email (optional — user_id can be null for unregistered
+        // invites)
         String email = request.getMemberEmail();
         if (email != null && !email.isBlank()) {
             Optional<User> user = userRepository.findByEmail(email);
@@ -97,7 +115,12 @@ public class MemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // DELETE /board/member/{id} -> delete a member by id
+    /**
+     * Delete a member by its ID.
+     *
+     * @param id the member UUID
+     * @return 204 on success, or 404 if not found
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @Operation(summary = "Delete a member", description = "Delete a member by its ID")

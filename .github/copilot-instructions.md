@@ -16,6 +16,7 @@ Frontend : Angular (JWT Bearer token + cookie httpOnly pour le refresh token).
 - Expliquer les corrections simplement (niveau junior).
 - Toujours donner : problème / cause / correction / explication.
 - Avant de toucher un **élément protégé**, afficher un avertissement explicite et demander confirmation.
+- **Ne jamais utiliser d'emojis ou d'icônes** dans les commentaires de code (`/** */`, `//`) ni dans les messages générés. Les commentaires doivent être du texte brut uniquement.
 
 ---
 

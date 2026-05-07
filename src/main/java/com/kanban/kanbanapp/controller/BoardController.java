@@ -42,7 +42,7 @@ public class BoardController {
         }
 
         String email = authentication.getName();
-        System.out.println("🔍 DEBUG - Attempting to find user with email: " + email);
+        System.out.println("DEBUG - Attempting to find user with email: " + email);
 
         if (email == null || email.equals("anonymousUser")) {
             throw new RuntimeException("No valid user principal found");
@@ -50,28 +50,33 @@ public class BoardController {
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    System.err.println("❌ ERROR - User not found in database with email: " + email);
+                    System.err.println("ERROR - User not found in database with email: " + email);
                     return new RuntimeException("User not found with email: " + email);
                 });
     }
 
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get user's boards", description = "Retrieve all boards for the authenticated user")
+    /**
+     * Retrieve all boards belonging to the authenticated user.
+     *
+     * @return 200 with the list of boards
+     */
     @GetMapping("/all")
     public ResponseEntity<List<Board>> getUserBoards() {
         try {
-            System.out.println("📥 DEBUG - GET /boards/all called");
+            System.out.println("DEBUG - GET /boards/all called");
             User user = getAuthenticatedUser();
-            System.out.println("✅ DEBUG - User found: " + user.getEmail() + " (ID: " + user.getId() + ")");
+            System.out.println("DEBUG - User found: " + user.getEmail() + " (ID: " + user.getId() + ")");
 
-            // ✅ Use the corrected repository method that navigates through the User
+            // Use the corrected repository method that navigates through the User
             // relationship
             List<Board> boards = boardRepository.findAllByUser_Id(user.getId());
-            System.out.println("✅ DEBUG - Found " + boards.size() + " boards for user");
+            System.out.println("DEBUG - Found " + boards.size() + " boards for user");
 
             return ResponseEntity.ok(boards);
         } catch (Exception e) {
-            System.err.println("❌ ERROR in getUserBoards: " + e.getMessage());
+            System.err.println("ERROR in getUserBoards: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -79,6 +84,13 @@ public class BoardController {
 
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get board by ID", description = "Retrieve a specific board by its ID")
+    /**
+     * Retrieve a single board by its ID, including columns and members.
+     * Returns 403 if the board does not belong to the authenticated user.
+     *
+     * @param id the board UUID
+     * @return 200 with BoardDetailResponse, or 403 if not found/unauthorized
+     */
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<BoardDetailResponse> getBoardById(@PathVariable @NonNull String id) {
@@ -92,8 +104,7 @@ public class BoardController {
                                     col.getId(),
                                     col.getColumnName(),
                                     col.getColumnOrder(),
-                                    col.getLimitWorkInProgress()
-                            ))
+                                    col.getLimitWorkInProgress()))
                             .toList();
 
                     List<BoardDetailResponse.MemberDto> memberDtos = board.getMembers().stream()
@@ -101,8 +112,7 @@ public class BoardController {
                                     m.getId(),
                                     m.getMemberEmail(),
                                     m.getRole() != null ? m.getRole().name() : null,
-                                    m.getMemberOrder()
-                            ))
+                                    m.getMemberOrder()))
                             .toList();
 
                     BoardDetailResponse detail = new BoardDetailResponse(
@@ -110,15 +120,20 @@ public class BoardController {
                             board.getName(),
                             board.getDescription(),
                             columnDtos,
-                            memberDtos
-                    );
+                            memberDtos);
 
                     return ResponseEntity.ok(detail);
                 })
                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
     }
 
-    @PreAuthorize("isAuthenticated()") // Ensure only members and administrators can access this endpoint
+    /**
+     * Create a new board for the authenticated user.
+     *
+     * @param board board payload (name, description)
+     * @return 201 with the created BoardResponse
+     */
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Create a new board", description = "Create a new board for the authenticated user")
     @PostMapping
     public ResponseEntity<BoardResponse> createBoard(@RequestBody @NonNull Board board) {
@@ -128,16 +143,23 @@ public class BoardController {
         Board savedBoard = boardRepository.save(board);
 
         BoardResponse response = new BoardResponse(
-            savedBoard.getId(),
-            savedBoard.getName(),
-            savedBoard.getDescription()
-        );
+                savedBoard.getId(),
+                savedBoard.getName(),
+                savedBoard.getDescription());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("isAuthenticated()") // Ensure only members and administrators can access this endpoint
     @Operation(summary = "Update a board", description = "Update an existing board")
+    /**
+     * Update an existing board (name and description).
+     * Returns 403 if the board does not belong to the authenticated user.
+     *
+     * @param id           the board UUID
+     * @param boardDetails new board data
+     * @return 200 with the updated board, or 403 if not found/unauthorized
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Board> updateBoard(
             @PathVariable @NonNull String id,
@@ -158,6 +180,13 @@ public class BoardController {
 
     @PreAuthorize("isAuthenticated()") // Ensure only members and administrators can access this endpoint
     @Operation(summary = "Delete a board", description = "Delete a board by its ID")
+    /**
+     * Delete a board by its ID.
+     * Returns 403 if the board does not belong to the authenticated user.
+     *
+     * @param id the board UUID
+     * @return 200 on success, or 403 if not found/unauthorized
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable @NonNull String id) {
         User user = getAuthenticatedUser();

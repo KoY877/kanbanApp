@@ -99,7 +99,7 @@ public class JwtService {
 
         Long expirationMs = jwtProperties.getAccessToken().getExpiration();
         System.out.println(
-                "🔍 DEBUG - Access token expiration: " + expirationMs + " ms (" + (expirationMs / 60000) + " minutes)");
+                "DEBUG - Access token expiration: " + expirationMs + " ms (" + (expirationMs / 60000) + " minutes)");
 
         return Jwts.builder()
                 .claims(claims)

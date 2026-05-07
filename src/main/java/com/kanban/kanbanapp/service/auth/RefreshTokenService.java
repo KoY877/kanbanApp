@@ -124,25 +124,25 @@ public class RefreshTokenService {
     public RefreshToken rotateRefreshToken(RefreshToken oldToken) {
         // Verify if the token is already revoked
         if (oldToken.isRevoked()) {
-            // ✅ AMÉLIORATION: Vérifier si c'est une race condition ou une vraie attaque
+            // Check if this is a race condition or a real attack
 
             Instant revokedAt = oldToken.getRevokedAt();
             if (revokedAt != null) {
                 long secondsSinceRevocation = Instant.now().getEpochSecond() - revokedAt.getEpochSecond();
 
-                // ✅ GRACE PERIOD: Si révoqué il y a moins de 30 secondes, c'est probablement
-                // une race condition
+                // GRACE PERIOD: If revoked less than 30 seconds ago, this is probably
+                // a race condition
                 if (secondsSinceRevocation < 30) {
                     System.out.println(
-                            "⚠️ Token déjà révoqué il y a " + secondsSinceRevocation + "s - Race condition probable");
+                            "Token already revoked " + secondsSinceRevocation + "s ago - probable race condition");
                     System.out.println("   → Rejet de la tentative SANS détruire la famille");
                     throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                             "Token already used - please retry with the new token");
                 }
 
-                // ❌ ATTACK DETECTED: Token révoqué depuis longtemps = vraie attaque
-                System.err.println("🚨 TOKEN REUSE ATTACK DETECTED!");
-                System.err.println("   Token révoqué il y a " + secondsSinceRevocation + "s");
+                // ATTACK DETECTED: Token revoked long ago = real attack
+                System.err.println("TOKEN REUSE ATTACK DETECTED!");
+                System.err.println("   Token revoked " + secondsSinceRevocation + "s ago");
                 System.err.println("   → Révocation de toute la famille: " + oldToken.getTokenFamily());
                 revokeTokenFamily(oldToken.getTokenFamily());
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
@@ -153,8 +153,8 @@ public class RefreshTokenService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token already revoked");
         }
 
-        // ✅ Token valide, procéder à la rotation normale
-        System.out.println("🔄 Rotation du token pour user: " + oldToken.getUser().getEmail());
+        // Valid token, proceed with normal rotation
+        System.out.println("Token rotation for user: " + oldToken.getUser().getEmail());
 
         // Mark the old token as revoked
         oldToken.setRevoked(true);
@@ -172,7 +172,7 @@ public class RefreshTokenService {
         newToken.setCreatedDate(Instant.now());
 
         RefreshToken savedToken = refreshTokenRepository.save(newToken);
-        System.out.println("✅ Nouveau token créé dans la famille: " + oldToken.getTokenFamily());
+        System.out.println("New token created in family: " + oldToken.getTokenFamily());
 
         return savedToken;
     }

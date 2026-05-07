@@ -9,20 +9,24 @@ Built with **Spring Boot**, following clean architecture and best practices.
 
 * Frontend: https://your-app.vercel.app
 * Backend API: https://your-api.onrender.com
-* Swagger UI: http://localhost:8081/api/swagger-ui.html
+* Swagger UI: http://localhost:8081/swagger-ui.html
 
 ---
 
 ## Features
 
-* User registration & authentication
+* User registration & authentication (JWT)
+* Access token (15 min) + Refresh token (7 days, httpOnly cookie)
+* Secure token rotation with reuse detection
+* Access token blacklist (revocation before expiry)
 * Kanban board management
 * Custom columns with WIP limits
 * Team collaboration (members & roles)
 * Full CRUD operations
 * Cascade deletion
 * Password encryption (BCrypt)
-* Interactive API documentation (Swagger)
+* Rate limiting (Bucket4j)
+* Interactive API documentation (Swagger UI)
 * Docker support
 
 ---
@@ -47,24 +51,33 @@ Controller → Service → Repository → Database
 | Technology        | Description               |
 | ----------------- | ------------------------- |
 | Java 23           | Programming language      |
-| Spring Boot       | Backend framework         |
+| Spring Boot 3.5   | Backend framework         |
 | Spring Security   | Authentication & security |
 | Spring Data JPA   | ORM & persistence         |
-| MariaDB           | Database                  |
+| MySQL             | Database                  |
 | Docker            | Containerization          |
 | Swagger (OpenAPI) | API documentation         |
+| Bucket4j          | Rate limiting             |
 
 ---
 
 ## Authentication
 
-> Current version uses an API key (`api-secret`)
-> Migration to **JWT authentication** in progress
+This API uses **JWT Bearer tokens** with a secure httpOnly cookie for refresh tokens.
 
-Example header:
+### Flow
+
+1. Call `POST /auth/login` or `POST /auth/register`
+2. The response body contains an `accessToken` (valid 15 minutes)
+3. A `refreshToken` is set as an **httpOnly cookie** (valid 7 days) — never in the JSON body
+4. Use the `accessToken` in the `Authorization` header: `Bearer <token>`
+5. When the access token expires, call `POST /auth/refresh` — the cookie is sent automatically
+6. To end the session, call `POST /auth/logout`
+
+### Headers
 
 ```http
-api-secret: your-secret-key
+Authorization: Bearer <accessToken>
 ```
 
 ---
@@ -75,27 +88,45 @@ api-secret: your-secret-key
 
 * `POST /auth/login`
 * `POST /auth/register`
+* `POST /auth/refresh`
+* `POST /auth/logout`
+* `POST /auth/change-password`
+* `POST /auth/revoke-all-tokens`
 
 ### Boards
 
-* `GET /board`
-* `POST /board`
-* `PUT /board/{id}`
-* `DELETE /board/{id}`
+* `GET /boards`
+* `POST /boards`
+* `PUT /boards/{id}`
+* `DELETE /boards/{id}`
 
 ### Columns
 
-* `POST /kanban-column`
-* `GET /kanban-column`
-* `PUT /kanban-column/{id}`
-* `DELETE /kanban-column/{id}`
+* `POST /board/kanban-column`
+* `GET /board/kanban-column`
+* `PUT /board/kanban-column/{id}`
+* `DELETE /board/kanban-column/{id}`
+
+### Tasks
+
+* `GET /tasks`
+* `POST /tasks`
+* `PUT /tasks/{id}`
+* `DELETE /tasks/{id}`
 
 ### Members
 
-* `POST /member`
-* `GET /member`
-* `PUT /member/{id}`
-* `DELETE /member/{id}`
+* `POST /members`
+* `GET /members`
+* `PUT /members/{id}`
+* `DELETE /members/{id}`
+
+### Users
+
+* `GET /user`
+* `GET /user/{id}`
+* `PATCH /user/profile/{id}`
+* `DELETE /user/{id}`
 
 ---
 

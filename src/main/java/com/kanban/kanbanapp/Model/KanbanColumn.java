@@ -64,5 +64,6 @@ public class KanbanColumn {
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
+    @JsonIgnore
     private List<Task> tasks = new ArrayList<>();
 }
