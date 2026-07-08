@@ -1,0 +1,131 @@
+
+<nav class="navbar  header ">
+    <div class="container-fluid " >
+      <div class="row">
+
+        <div class="col-lg 12   " >
+          <div class="dropdown " >
+              <button class="btn-header board" type="button" data-bs-toggle="dropdown" *ngIf="isConnected" >
+                  <div class="bars" (click)="handlecloseAllOpenDropdown()" >
+                      <fa-icon [icon]="faBars"></fa-icon>
+                      <span> Boards </span>
+                  </div>
+              </button>
+              <ul class="dropdown-menu" [ngClass]="{'show': isDropdownOpenBoards}">
+                <!-- Zone scrollable pour les boards -->
+                <div class="boards-list">
+                  <li *ngFor="let item of boards" >
+                       <a class="dropdown-item "
+                          [ngClass]="{'activ': activeIndex === item!.name}"
+                          (click)="handleOpenBoard(item!.id!, item!.name)">
+                            {{ item?.name }}
+                        </a>
+                  </li>
+                </div>
+
+                <!-- Bouton Create board toujours visible -->
+                <li>
+                    <button
+                        class="button-create next"
+                        type="button"
+                        [ngClass]="{'activ': activeIndex === 'createBoard'}"
+                        (click)="onCreateBoard()"
+                    >
+                        Create board
+                    </button>
+                </li>
+              </ul>
+          </div>
+
+          <div class=" logo-container justify-content-between align-items-center">
+            <span class="logo " style="--bs-scroll-height: 100px; ">
+                <img src="assets/images/logo.png" alt="Logo" class="logo-image">
+                <a class="navbar-brand ml-auto " href="">KanbanApp</a>
+            </span>
+          </div>
+
+
+          <div class="menu-wrapper align-items-center justify-content-end " *ngIf="!isConnected">
+            <button class="sign-in" type="button" (click)="handleSignIn()">Sign In</button>
+            <button class="sign-up" type="button" (click)="handleSignUp()">Sign Up</button>
+          </div>
+
+          <div class="menu-wrapper align-items-center justify-content-end " style="--bs-scroll-height: 100px; "  *ngIf="isConnected">
+            <div class="dropdown">
+                <button class="btn-header" type="button" data-bs-toggle="dropdown"  >
+                    <div class="icons-back" (click)="handlecloseAllOpenDropdown()">
+                      <span class=" fa user">{{ ownerInitials }}</span>
+                    </div>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end"  [ngClass]="{'show': isDropdownOpenUser}">
+                  <li><a class="dropdown-item" href="#" (click)="handleEditProfile()">Edit Profile</a></li>
+                  <li><a class="dropdown-item" href="#" (click)="handleDisconnect(); $event.preventDefault()">Disconnect</a></li>
+                </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</nav>
+
+<!-- Edit Profile Modal -->
+<div
+  class="modal-overlay"
+  *ngIf="isEditProfileOpen"
+  (click)="handleCloseEditProfile()"
+>
+  <div
+    class="modal-profile"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-header">
+      <strong>Edit Profile</strong>
+      <button
+        type="button"
+        class="btn-close"
+        (click)="handleCloseEditProfile()"
+      ></button>
+    </div>
+    <div class="modal-body">
+      <label for="usernameInput">Username</label>
+      <input
+        type="text"
+        id="usernameInput"
+        class="form-control mb-3"
+        [(ngModel)]="editedUsername"
+      />
+
+      <label for="emailInput">Email</label>
+      <input
+        type="email"
+        id="emailInput"
+        class="form-control mb-3"
+        [(ngModel)]="editedEmail"
+      />
+
+      <label for="passwordInput">New Password</label>
+      <input
+        type="password"
+        id="passwordInput"
+        class="form-control mb-3"
+        [(ngModel)]="editedPassword"
+      />
+
+      <label for="confirmPasswordInput">Confirm New Password</label>
+      <input
+        type="password"
+        id="confirmPasswordInput"
+        class="form-control mb-3"
+        [(ngModel)]="editedPasswordConfirm"
+      />
+
+
+      <button
+        class="btn btn-success mt-3 w-100"
+        (click)="handleUpdateProfile()"
+      >
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>

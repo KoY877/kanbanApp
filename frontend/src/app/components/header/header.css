@@ -1,0 +1,281 @@
+/* ============================================
+   HEADER STYLES
+   ============================================ */
+
+.header {
+    height: 45px;
+    background-color: #444;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1060;
+    width: 100%;
+}
+
+.row {
+    width: 100%;
+}
+
+.col-lg {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+
+.navbar-brand {
+    color: #2185d0;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.navbar-brand:hover {
+    color: #2185d0;
+}
+
+/* ============================================
+   LAYOUT & FLEX
+   ============================================ */
+
+.flex {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown {
+    flex-shrink: 0;
+}
+
+/* Logo au centre */
+.logo-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-image {
+    height: 35px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Menu utilisateur à droite */
+.user-menu {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.menu-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn-header {
+    padding: 0 2px;
+    margin: 0 3px;
+    height: 30px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-header:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-header:active,
+button:active {
+    background-color: rgba(153, 153, 153, 0.15);
+}
+
+.button-create:active {
+    background-color: #2185d0;
+    transform: scale(0.95);
+}
+
+.sign-in,
+.sign-up {
+    padding: 6px 16px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.sign-in {
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
+}
+
+.sign-in:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sign-up {
+    background-color: #2185d0;
+    color: white;
+}
+
+.sign-up:hover {
+    background-color: #1a6db8;
+}
+
+/* ============================================
+   ICONS & IMAGES
+   ============================================ */
+
+.bars {
+    margin-left: 5px;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.QuestionTag {
+    color: black;
+}
+
+.icons-back .user {
+    font-size: 11px;
+    color: darkred;
+    position: relative;
+    top: -2px;
+    left: 0;
+}
+
+/* Browser-specific adjustments */
+@-moz-document url-prefix() {
+    .dropdown-board > .user {
+        top: -2px !important;
+        left: 0 !important;
+    }
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .icons-back .user {
+        top: -2px;
+        left: 0;
+    }
+}
+
+/* ============================================
+   SEARCH
+   ============================================ */
+
+.form-inline {
+    margin-left: 7px;
+}
+
+.search {
+    margin: 0.5rem 0.5rem 0.5rem 0.23rem;
+    border: 2px solid #cbcccc;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.search:active,
+.search:focus {
+    border-color: #2185d0;
+}
+
+.dropdown-menu {
+    z-index: 1050;
+    min-width: 250px;
+    max-width: 320px;
+    padding: 0;
+    margin-top: 4px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Zone scrollable uniquement pour la liste des boards */
+.boards-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.boards-list li {
+    list-style: none;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.activ {
+    border-left: 3.5px solid #2185d0;
+}
+
+.shadow {
+    box-shadow: 5px 0 0 0 rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-profile {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-profile .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-profile .modal-body {
+  padding: 20px;
+}
+
+.modal-profile .modal-body label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}

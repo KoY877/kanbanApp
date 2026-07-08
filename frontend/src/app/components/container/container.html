@@ -1,0 +1,35 @@
+<div class="container-fluid containerHeight"
+    [ngClass]="{
+      'container-board-open': openBoard && !openModalCreateBoard,
+      'container-modal-visible': openModalCreateBoard
+    }"
+    >
+
+  <app-sign-in
+    *ngIf="sign_in && !sign_up && !isConnected"
+    (closeSignIn_OpenSignUp)="handleOpenSignUp()"
+  ></app-sign-in>
+
+
+  <app-sign-up
+    *ngIf="sign_up && !sign_in && !isConnected"
+    (closeSignUp)="handleCloseSignUp($event)"
+    (openSignIn)="handleOpenSignIn()"
+  ></app-sign-up>
+
+  <app-modal-create-board
+    *ngIf="openModalCreateBoard && isConnected && !sign_in && !sign_up"
+    (closeModal)="handleCloseModal()"
+  ></app-modal-create-board>
+
+
+  <app-board
+    *ngIf="isConnected && openBoard"
+    [clickedBoard]="clickedBoard"
+    [isCloseAllDropdown]="isCloseAllDropdown"
+    (allDropdownClosed)="handleClosedDropdown()"
+    (sendTaskData)="handleBoardDeleted()">
+  </app-board>
+
+<!-- ...existing code... -->
+</div>
