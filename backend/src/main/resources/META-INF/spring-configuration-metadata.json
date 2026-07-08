@@ -1,0 +1,90 @@
+{
+  "groups": [
+    {
+      "name": "jwt",
+      "type": "com.kanban.kanbanapp.config.JwtProperties",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties"
+    },
+    {
+      "name": "jwt.access-token",
+      "type": "com.kanban.kanbanapp.config.JwtProperties$AccessToken",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties",
+      "sourceMethod": "getAccessToken()"
+    },
+    {
+      "name": "jwt.refresh-token",
+      "type": "com.kanban.kanbanapp.config.JwtProperties$RefreshToken",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties",
+      "sourceMethod": "getRefreshToken()"
+    },
+    {
+      "name": "cors",
+      "type": "com.kanban.kanbanapp.config.CorsProperties",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret key used for JWT token signing and validation",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties"
+    },
+    {
+      "name": "jwt.access-token.expiration",
+      "type": "java.lang.Long",
+      "description": "Access token expiration time in milliseconds",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties$AccessToken",
+      "defaultValue": 900000
+    },
+    {
+      "name": "jwt.refresh-token.expiration",
+      "type": "java.lang.Long",
+      "description": "Refresh token expiration time in milliseconds",
+      "sourceType": "com.kanban.kanbanapp.config.JwtProperties$RefreshToken",
+      "defaultValue": 604800000
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Allowed origins for CORS requests",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties",
+      "defaultValue": "http://localhost:4200,http://localhost:8081"
+    },
+    {
+      "name": "cors.allowed-methods",
+      "type": "java.lang.String",
+      "description": "Allowed HTTP methods for CORS requests",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties",
+      "defaultValue": "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    },
+    {
+      "name": "cors.allowed-headers",
+      "type": "java.lang.String",
+      "description": "Allowed headers for CORS requests",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties",
+      "defaultValue": "*"
+    },
+    {
+      "name": "cors.allow-credentials",
+      "type": "java.lang.Boolean",
+      "description": "Whether to allow credentials in CORS requests",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties",
+      "defaultValue": true
+    },
+    {
+      "name": "cors.max-age",
+      "type": "java.lang.Integer",
+      "description": "Maximum age for CORS preflight requests cache in seconds",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties",
+      "defaultValue": 3600
+    },
+    {
+      "name": "cors.expose-headers",
+      "type": "java.lang.String",
+      "description": "Headers to expose in CORS responses",
+      "sourceType": "com.kanban.kanbanapp.config.CorsProperties"
+    }
+  ],
+  "hints": []
+}

@@ -1,0 +1,1 @@
+Utilise les règles définies dans .copilot-instructions.md

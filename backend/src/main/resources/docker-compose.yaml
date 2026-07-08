@@ -1,0 +1,24 @@
+# Use root/example as user/password credentials
+
+
+services:
+
+  db:
+    container_name: mariadb-latest
+    image: mariadb:latest
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: a20lFZZr6clAhxwO
+      MARIADB_DATABASE: tododb
+      MARIADB_USER: appTodo
+      MARIADB_PASSWORD: a20lFZZr6clAhxwO
+    ports:
+      - "127.0.0.1:3309:3306"
+   
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "127.0.0.1:9082:8080"
+ 

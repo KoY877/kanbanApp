@@ -1,0 +1,220 @@
+package com.kanban.kanbanapp.controller;
+
+import com.kanban.kanbanapp.Data_Transfer_Object.MemberCreateRequest;
+import com.kanban.kanbanapp.Model.Board;
+import com.kanban.kanbanapp.Model.Member;
+import com.kanban.kanbanapp.Model.User;
+import com.kanban.kanbanapp.Model.enums.Role;
+import com.kanban.kanbanapp.repository.BoardRepository;
+import com.kanban.kanbanapp.repository.MemberRepository;
+import com.kanban.kanbanapp.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.*;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+
+@Tag(name = "Member Controller", description = "APIs for managing members")
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/board/member")
+@Validated
+public class MemberController {
+
+    private final MemberRepository memberRepository;
+    private final BoardRepository boardRepository;
+    private final UserRepository userRepository;
+
+    /**
+     * Retrieve all board members.
+     *
+     * @return 200 with the list of members
+     */
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get all members", description = "Retrieve a list of all members")
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Iterable<Member>> getAll() {
+
+        Iterable<Member> membersIterable = memberRepository.findAll();
+
+        return ResponseEntity.status(HttpStatus.OK).body(membersIterable);
+    }
+
+    /**
+     * Retrieve a single member by its ID.
+     *
+     * @param id the member UUID
+     * @return 200 with the member, or 404 if not found
+     */
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get member by ID", description = "Retrieve a single member by its ID")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
+    @GetMapping("/{id}")
+    public ResponseEntity<Member> getMemberById(@PathVariable(value = "id") @NonNull String id) {
+        Optional<Member> memberInDb = memberRepository.findById(id);
+        return memberInDb.map(member -> new ResponseEntity<>(member, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * Create a new member and associate them with a board.
+     * If the given email matches an existing user, the member is linked to that
+     * user.
+     *
+     * @param request creation payload (memberEmail, role, boardId)
+     * @return 201 with the created member, 400 if email is blank, or 404 if the
+     *         board does not exist
+     */
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Create a new member", description = "Create a new member with specified details")
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Member> create(@RequestBody @NonNull MemberCreateRequest request) {
+        Member member = new Member();
+        member.setMemberEmail(Optional.ofNullable(request.getMemberEmail()).orElse(""));
+        member.setMemberOrder(Optional.ofNullable(request.getMemberOrder()).orElse(0));
+
+        String roleRequest = request.getRole();
+
+        if (roleRequest != null) {
+            try {
+                member.setRole(Role.valueOf(roleRequest.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                member.setRole(Role.STANDARD);
+            }
+        } else {
+            member.setRole(Role.STANDARD);
+        }
+
+        // Associate with board if boardId is provided
+        if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
+            String boardId = java.util.Objects.requireNonNull(request.getBoardId());
+            Optional<Board> board = boardRepository.findById(boardId);
+            if (board.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            member.setBoard(board.get());
+        }
+
+        // Resolve user by email (optional — user_id can be null for unregistered
+        // invites)
+        String email = request.getMemberEmail();
+        if (email != null && !email.isBlank()) {
+            Optional<User> user = userRepository.findByEmail(email);
+            user.ifPresent(member::setUser);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        Member saved = memberRepository.save(member);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /**
+     * Delete a member by its ID.
+     *
+     * @param id the member UUID
+     * @return 204 on success, or 404 if not found
+     */
+    @PreAuthorize("isAuthenticated()")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
+    @Operation(summary = "Delete a member", description = "Delete a member by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") @NonNull String id) {
+        if (memberRepository.existsById(id)) {
+            memberRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // PUT /board/member/{id} -> update a member by id
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Update a member", description = "Update a member by its ID")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
+    @PutMapping("/{id}")
+    public ResponseEntity<Member> update(@PathVariable(value = "id") @NonNull String id,
+            @RequestBody @NonNull MemberCreateRequest request) {
+
+        Optional<Member> memberInDb = memberRepository.findById(id);
+
+        if (memberInDb.isPresent()) {
+            Member memberToUpdate = memberInDb.get();
+            memberToUpdate.setMemberEmail(
+                    Optional.ofNullable(request.getMemberEmail()).orElse(memberToUpdate.getMemberEmail()));
+            String roleRequest = request.getRole();
+            if (roleRequest != null) {
+                try {
+                    memberToUpdate.setRole(Role.valueOf(roleRequest.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    memberToUpdate.setRole(Role.STANDARD);
+                }
+            } else {
+                memberToUpdate.setRole(Role.STANDARD);
+            }
+
+            // Update board if boardId is provided
+            if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
+                String boardId = java.util.Objects.requireNonNull(request.getBoardId());
+                Optional<Board> board = boardRepository.findById(boardId);
+                if (board.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                }
+                memberToUpdate.setBoard(board.get());
+            }
+
+            Member updatedMember = memberRepository.save(memberToUpdate);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedMember);
+        }
+
+        return ResponseEntity.notFound().build();
+
+    }
+
+    // PATCH /member/{id} -> patch a member by id
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Patch a member", description = "Partially update a member by its ID")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Member> patch(@PathVariable(value = "id") String id,
+            @RequestBody Map<String, Object> updates) {
+
+        // Optional<Member> memberInDb = memberRepository.findById(id);
+
+        // if (memberInDb.isPresent()) {
+        // Member memberToPatch = memberInDb.get();
+
+        // if (updates.containsKey("memberEmail")) {
+        // memberToPatch.setMemberEmail((String) updates.get("memberEmail"));
+        // }
+        // if (updates.containsKey("role")) {
+        // memberToPatch.setRole((String) updates.get("role"));
+        // }
+
+        // if (updates.containsKey("boardId")) {
+        // String boardId = (String) updates.get("boardId");
+        // if (boardId != null && !boardId.isEmpty()) {
+        // Optional<Board> board = boardRepository.findById(boardId);
+        // if (board.isEmpty()) {
+        // return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        // }
+        // memberToPatch.setBoard(board.get());
+        // } else {
+        // memberToPatch.setBoard(null);
+        // }
+        // }
+
+        // // Note: 'secret' is not updatable for security reasons
+
+        // Member patchedMember = memberRepository.save(memberToPatch);
+        // return ResponseEntity.status(HttpStatus.OK).body(patchedMember);
+        // }
+
+        return ResponseEntity.notFound().build();
+    }
+}
