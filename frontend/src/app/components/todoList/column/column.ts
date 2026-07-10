@@ -88,9 +88,17 @@ export class List implements OnChanges {
   /**
    * Open the add-task modal for a given column, closing any open menu
    * dropdowns and registering a one-shot outside-click listener to close it.
+   * Does nothing if the column has already reached its WIP limit.
    * @param columnId - the column to add the task to
    */
   handleAddTask(columnId: string) {
+    const col = this.column.find(c => c.id === columnId);
+    const limit = col?.limitWorkInProgress;
+    if (limit !== null && limit !== undefined && (col?.tasks?.length ?? 0) >= limit) {
+      alert(`Column "${col?.columnName}" has reached its WIP limit of ${limit}`);
+      return;
+    }
+
     this.selectedColumnId = columnId;
     this.isOpenTaskModal = true
     this.isEditTask = false

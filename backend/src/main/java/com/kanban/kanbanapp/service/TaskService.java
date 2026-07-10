@@ -12,6 +12,7 @@ import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.KanbanColumn;
 import com.kanban.kanbanapp.Model.Member;
 import com.kanban.kanbanapp.Model.Task;
+import com.kanban.kanbanapp.exception.WipLimitExceededException;
 import com.kanban.kanbanapp.repository.KanbanColumnRepository;
 import com.kanban.kanbanapp.repository.MemberRepository;
 import com.kanban.kanbanapp.repository.TaskRepository;
@@ -32,9 +33,10 @@ public class TaskService {
      *
      * @param request task creation payload (name, description, columnId, members...)
      * @return the created and persisted task
-     * @throws RuntimeException if the target column is not found, or if a
-     *                          member id is invalid or does not belong to the
-     *                          column's board
+     * @throws RuntimeException          if the target column is not found, or if a
+     *                                   member id is invalid or does not belong to the
+     *                                   column's board
+     * @throws WipLimitExceededException if the column is already at its WIP limit
      */
     @Transactional
     public Task createTask(@NonNull TaskCreateRequest request) {
@@ -46,6 +48,9 @@ public class TaskService {
 
         List<Member> assignedMembers = resolveMembers(request.getMembers(), board);
 
+        int currentCount = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(column.getId()).size();
+        checkWipLimit(column, currentCount);
+
         Task task = new Task();
         task.setName(request.getName().trim());
         task.setDescription(request.getDescription());
@@ -55,11 +60,25 @@ public class TaskService {
         task.setLabels(safeList(request.getLabels()));
         task.setMembers(assignedMembers);
         task.setColumn(column);
-
-        int nextOrder = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(column.getId()).size();
-        task.setTaskOrder(nextOrder);
+        task.setTaskOrder(currentCount);
 
         return taskRepository.save(task);
+    }
+
+    /**
+     * Reject the operation if adding one more task would push the column
+     * past its configured WIP limit.
+     *
+     * @param column       the target column
+     * @param currentCount the column's task count before adding the new task
+     * @throws WipLimitExceededException if the column is already at its WIP limit
+     */
+    private void checkWipLimit(KanbanColumn column, int currentCount) {
+        Integer limit = column.getLimitWorkInProgress();
+        if (limit != null && currentCount >= limit) {
+            throw new WipLimitExceededException(
+                "Column \"" + column.getColumnName() + "\" has reached its WIP limit of " + limit);
+        }
     }
 
     /**
@@ -114,9 +133,11 @@ public class TaskService {
      * @param taskId  the task id
      * @param request the new task data
      * @return the updated task
-     * @throws RuntimeException if the task or target column is not found, or
-     *                          if a member id is invalid or does not belong
-     *                          to the target column's board
+     * @throws RuntimeException          if the task or target column is not found, or
+     *                                   if a member id is invalid or does not belong
+     *                                   to the target column's board
+     * @throws WipLimitExceededException if moving the task into a different
+     *                                   column would exceed that column's WIP limit
      */
     @Transactional
     public Task updateTask(@NonNull String taskId, @NonNull TaskCreateRequest request) {
@@ -143,9 +164,11 @@ public class TaskService {
         task.setMembers(assignedMembers);
 
         if (!oldColumnId.equals(newColumnId)) {
+            int currentCount = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(newColumnId).size();
+            checkWipLimit(targetColumn, currentCount);
+
             task.setColumn(targetColumn);
-            int nextOrder = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(newColumnId).size();
-            task.setTaskOrder(nextOrder);
+            task.setTaskOrder(currentCount);
         }
 
         Task savedTask = taskRepository.save(task);

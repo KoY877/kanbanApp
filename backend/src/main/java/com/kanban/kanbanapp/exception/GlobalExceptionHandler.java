@@ -145,6 +145,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle an attempt to add or move a task past a column's WIP limit.
+     *
+     * @param ex      the thrown exception
+     * @param request the current web request
+     * @return 409 with an ErrorResponse body
+     */
+    @ExceptionHandler(WipLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleWipLimitExceededException(
+            WipLimitExceededException ex, WebRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    /**
      * Fallback handler for any unhandled runtime exception.
      *
      * @param ex      the thrown exception
