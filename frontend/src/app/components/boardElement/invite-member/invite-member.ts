@@ -66,6 +66,10 @@ export class InviteMember {
     })
   }
 
+  /**
+   * Lifecycle hook: validate the email input as the user types and assign a
+   * random color to each already-present member row.
+   */
   ngOnInit(): void {
     this.email.valueChanges.subscribe((value: string) => {
       if (value && value.trim() !== '') {
@@ -83,12 +87,17 @@ export class InviteMember {
     this.memberColors = this.members.controls.map(() => this.getRandomColor());
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // If outside this component is clicked, send output on the board
+  /**
+   * When a click occurs outside this component, either reset the email
+   * input (nothing pending) or notify the parent that an email is pending.
+   * @param event - the document click event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
@@ -105,25 +114,32 @@ export class InviteMember {
     }
   }
 
-  // close dropdown field
+  /** Close the invite-member dropdown. */
   handleCloseDropdown() {
     this.closeInviteModal.emit()
   }
 
+  /** The single-email input control. */
   get email(): FormControl {
     return this.form.get('email') as FormControl;
   }
 
+  /** The FormArray holding the members staged for invitation. */
   get members(): FormArray {
     return this.form.get('members') as FormArray;
   }
 
+  /** The role selected for the members being invited. */
   get chooseRole(): FormControl {
     return this.form.get('chooseRole') as FormControl;
   }
 
-
-  // Add an email to the list
+  /**
+   * Validate the current email input and add it to the staged members list,
+   * unless it is invalid, already on the board, or already staged.
+   * @param event - the form submit/click event
+   * @param id - the board id
+   */
   async addEmail(event: any, id: string) {
     event.preventDefault();
 
@@ -180,20 +196,29 @@ export class InviteMember {
     }
   }
 
-  // Remove an email from the list
+  /**
+   * Remove a staged email from the members list.
+   * @param event - the click event
+   * @param index - index of the entry to remove in the members FormArray
+   */
   removeEmail(event: any, index: number) {
     event.stopPropagation();
     event.preventDefault();
     this.members.removeAt(index);
   }
 
-  // Next Formular
+  /** Advance the wizard to the role-selection step (step 2). */
   moveToNextStep (){
     this.currentStep = 2
     this.detectChange.detectChanges()
   }
 
-  // Navigate to next step
+  /**
+   * Add any pending email input, deduplicate staged members, and advance
+   * to the role-selection step.
+   * @param event - the form submit event
+   * @param id - the board id
+   */
   async nextStep(event: any, id: string) {
     event.preventDefault();
 
@@ -230,7 +255,10 @@ export class InviteMember {
     }
   }
 
-  // remove duplicate member data
+  /**
+   * De-duplicate the staged members (same email + role) and rebuild the
+   * members FormArray from the unique set.
+   */
   removeDuplicateData() {
     this.receiveMembersData = this.members.value
 
@@ -257,13 +285,16 @@ export class InviteMember {
     })
   }
 
-  // Return to previous step
+  /** Go back to the email-entry step (step 1). */
   prevStep() {
     this.currentStep = 1;
     this.detectChange.detectChanges()
   }
 
-  // Return Hexdecimal color
+  /**
+   * Generate a random hex color for a member avatar.
+   * @returns a color string such as '#A3F2C1'
+   */
   getRandomColor(): string {
     const letters = '0123456789ABCDEF';
     this.color = '#';
@@ -273,7 +304,12 @@ export class InviteMember {
     return this.color;
   }
 
-  // Select Radio methode
+  /**
+   * Whether a role radio button should be disabled (another one is already
+   * selected).
+   * @param type - the radio group type ('task' or 'global')
+   * @returns true if the radio should be disabled
+   */
   isRadioDisabled(type: 'task' | 'global'): boolean {
     // Disables all other radios except the selected one
     if (type === 'task') {
@@ -283,10 +319,20 @@ export class InviteMember {
     return this.selectedIndex !== null;
   }
 
+  /**
+   * Select a radio button by index.
+   * @param index - the index of the selected radio
+   */
   selectRadio(index: number): void {
     this.selectedIndex = index;
   }
 
+  /**
+   * Invite the staged members to the board: filters out members already on
+   * the board, persists the new ones, then resets the form and reloads.
+   * @param event - the form submit event
+   * @param id - the board id
+   */
   async handleInviteMember(event: any, id: string) {
     event.preventDefault();
 

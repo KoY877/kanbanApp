@@ -45,11 +45,15 @@ export class ShowMember {
     private sendMemberData: Message
   ) {}
 
-  // If outside this component is clicked, send output on the board
+  /**
+   * When a click occurs outside this component, toggle the dropdown state
+   * and reset the change-role panel as needed.
+   * @param event - the document click event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
-      // Utiliser setTimeout pour éviter ExpressionChangedAfterItHasBeenCheckedError
+      // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
       setTimeout(() => {
         if (this.dropdownValue === false) {
           this.clickOutside.emit(this.dropdownValue = true);
@@ -75,6 +79,11 @@ export class ShowMember {
   }
 
 
+  /**
+   * Load the clicked member's full data and open the change-role panel.
+   * @param event - the clicked member's email
+   * @param id - unused, kept for template call-site compatibility
+   */
   async handleMemberEdit(event: string | undefined, id: string | undefined): Promise<void> {
     if (!event || !id) return;
     
@@ -94,7 +103,7 @@ export class ShowMember {
         (item: Members) => item.memberEmail === event
       );
       
-      // Change role visible dans setTimeout
+      // Show the change-role panel inside a setTimeout
       setTimeout(() => {
         this.isChangeRole = true;
 
@@ -110,6 +119,10 @@ export class ShowMember {
     }
   }
 
+  /**
+   * Remove a member from the board and reload the page.
+   * @param event - object identifying the member to delete (must carry `id`)
+   */
   async handlRemoveMember(event: any): Promise<void> {
     if (!event) return;
     try {
@@ -127,10 +140,17 @@ export class ShowMember {
     }
   }
 
+  /** Close the show-member modal. */
   handleCloseDropdown(): void {
     this.closeMemberModal.emit();
   }
 
+  /**
+   * Close the nested change-role panel, optionally applying the updated
+   * member data.
+   * @param event - the updated member if a role change was saved, or
+   *                undefined if the panel was simply closed
+   */
   handleCloseChangeRole(event: Members | undefined): void {
     // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
@@ -138,9 +158,9 @@ export class ShowMember {
         // Change role hidden
         this.isChangeRole = false;
       } else {
-        // Actualize memberData
+        // Refresh the local memberData with the updated member
         this.memberData = [event];
-        this.sendMemberData.messageRoleChange(event);       
+        this.sendMemberData.messageRoleChange(event);
 
         // Change role hidden
         this.isChangeRole = false;

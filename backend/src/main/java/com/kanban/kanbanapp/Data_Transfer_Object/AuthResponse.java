@@ -20,7 +20,7 @@ public class AuthResponse {
     @Schema(
         description = "JWT access token (short-lived, 15 minutes)",
         example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        required = true
+        nullable = false
     )
     private String accessToken;
     

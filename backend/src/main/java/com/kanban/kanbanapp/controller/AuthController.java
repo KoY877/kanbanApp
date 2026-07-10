@@ -7,7 +7,6 @@ import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.auth.JwtService;
 import com.kanban.kanbanapp.service.auth.RefreshTokenService;
-import com.kanban.kanbanapp.service.auth.TokenBlacklistService;
 import com.kanban.kanbanapp.service.auth.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -44,8 +43,6 @@ public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final TokenBlacklistService tokenBlacklistService;
-
     @Autowired
     private UserService userService;
 
@@ -61,8 +58,12 @@ public class AuthController {
     @Value("${app.security.cookie.secure:false}")
     private boolean isProduction;
 
-    AuthController(TokenBlacklistService tokenBlacklistService, PasswordEncoder passwordEncoder) {
-        this.tokenBlacklistService = tokenBlacklistService;
+    /**
+     * Construct the controller with its required dependencies.
+     *
+     * @param passwordEncoder encoder used to verify/hash user passwords
+     */
+    AuthController(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -201,13 +202,7 @@ public class AuthController {
             }
         }
 
-        // Check that Origin header is present (CORS)
-        String origin = request.getHeader("Origin");
-        String userAgent = request.getHeader("User-Agent");
-        System.out.println("Origin: " + origin);
-        System.out.println("User-Agent: "
-                + (userAgent != null ? userAgent.substring(0, Math.min(50, userAgent.length())) : "NULL"));
-
+       
         // Read refreshToken from httpOnly cookie
         String refreshTokenValue = Arrays.stream(cookies != null ? cookies : new Cookie[0])
                 .filter(cookie -> "refreshToken".equals(cookie.getName()))
@@ -219,8 +214,6 @@ public class AuthController {
                             "Check: withCredentials=true on the Angular side, CORS allowCredentials=true on the backend");
                     return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token provided");
                 });
-
-        System.out.println("RefreshToken found: " + refreshTokenValue.substring(0, 20) + "...");
 
         return refreshTokenService.findByToken(refreshTokenValue)
                 .map(refreshTokenService::verifyExpiration)
@@ -273,8 +266,8 @@ public class AuthController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Revoke all access tokens
-        tokenBlacklistService.revokeAllUserTokens(java.util.Objects.requireNonNull(user.getId()));
+        // Revoke all refresh tokens
+        refreshTokenService.revokeAllByUserId(java.util.Objects.requireNonNull(user.getId()));
 
         // Delete all refresh tokens
         refreshTokenService.deleteByUserId(user.getId());
@@ -353,24 +346,54 @@ public class AuthController {
         userRepository.save(user);
 
         // IMPORTANT: Revoke all existing tokens
-        tokenBlacklistService.revokeAllUserTokens(java.util.Objects.requireNonNull(user.getId()));
+        refreshTokenService.revokeAllByUserId(java.util.Objects.requireNonNull(user.getId()));
         refreshTokenService.deleteByUserId(java.util.Objects.requireNonNull(user.getId()));
 
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Placeholder audit hooks for authentication-related security events.
+     * Not yet wired to any persistence layer.
+     */
     @Service
     public class SecurityAuditService {
+
+        /**
+         * Record a login attempt.
+         *
+         * @param userId  the user id (never log email/name/password)
+         * @param success whether the attempt succeeded
+         * @param ip      the client IP address
+         */
         public void logLogin(String userId, boolean success, String ip) {
             // Log to database
         }
 
+        /**
+         * Record a password change event.
+         *
+         * @param userId the user id
+         * @param ip     the client IP address
+         */
         public void logPasswordChange(String userId, String ip) {
         }
 
+        /**
+         * Record a token refresh event.
+         *
+         * @param userId the user id
+         * @param ip     the client IP address
+         */
         public void logTokenRefresh(String userId, String ip) {
         }
 
+        /**
+         * Record an account lockout event.
+         *
+         * @param userId the user id
+         * @param reason the reason the account was locked
+         */
         public void logAccountLocked(String userId, String reason) {
         }
     }

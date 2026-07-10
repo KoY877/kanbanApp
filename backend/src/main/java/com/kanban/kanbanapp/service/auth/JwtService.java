@@ -16,7 +16,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -95,8 +94,6 @@ public class JwtService {
         claims.put("roles", List.of(user.getRole().name())); // AJOUT
         claims.put("token_type", "ACCESS");
 
-        String jti = UUID.randomUUID().toString(); // AJOUT
-
         Long expirationMs = jwtProperties.getAccessToken().getExpiration();
         System.out.println(
                 "DEBUG - Access token expiration: " + expirationMs + " ms (" + (expirationMs / 60000) + " minutes)");
@@ -104,7 +101,6 @@ public class JwtService {
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmail())
-                .id(jti)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey())
@@ -169,13 +165,6 @@ public class JwtService {
      */
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
-    }
-
-    /**
-     * Extract JWT ID (jti) from token
-     */
-    public String extractJti(String token) {
-        return extractClaim(token, Claims::getId);
     }
 
     /**

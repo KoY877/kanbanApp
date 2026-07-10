@@ -41,6 +41,9 @@ export class Members {
     });
   }
 
+  /**
+   * Lifecycle hook: wire up the debounced member search and load owner info.
+   */
   ngOnInit(): void {
     this.searchControl.valueChanges
       .pipe(
@@ -75,16 +78,18 @@ export class Members {
     this.initializeOwnerInfo();
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // get Selected email address
+  /** The FormArray of currently selected member emails. */
   get selectedEmails(): FormArray {
     return this.form.get('selectedEmails') as FormArray;
   }
 
+  /** Resolve the owner name/initials from localStorage for display. */
   private initializeOwnerInfo(): void {
     const currentUserId = localStorage.getItem('User-Id');
 
@@ -96,7 +101,12 @@ export class Members {
 
   }
 
-  // display the members, give the possibility to select an email or deselect it
+  /**
+   * Check or uncheck a member email, syncing the selectedEmails FormArray
+   * and notifying the parent Add-Task component either way.
+   * @param event - the checkbox change event
+   * @param item - the member item being toggled (mutated in place for the view)
+   */
   handleSelectedMember(event: Event, item: any) {
     event.preventDefault()
 
@@ -142,6 +152,7 @@ export class Members {
 
   }
 
+  /** Close the members dropdown. */
   handleCloseDropdown() {
     this.closeDropdownMembers.emit();
   }

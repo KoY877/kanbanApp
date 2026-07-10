@@ -39,16 +39,20 @@ export class ChangeRole {
       })
   }
 
+  /**
+   * Lifecycle hook: initialize the form with the selected member's current
+   * role, then re-initialize it once more after the value has settled.
+   */
   ngOnInit() {
     this.member = this.selectedMember[0].memberEmail
     this.role = this.selectedMember[0].role;
-    
+
     console.log(this.selectedMember[0].role);
 
     this.form = this.formBuilder.group({
       chooseRole: [this.role || 'Standard']
     });
-    
+
     // Once the value has been obtained, the form is initialized.
     setTimeout(() => {
       this.form = this.formBuilder.group({
@@ -57,12 +61,15 @@ export class ChangeRole {
     }, 100);
   }
 
-  // Method to handle closing the dropdown
+  /** Close the change-role dropdown without saving. */
   handleCloseDropdown(){
     this.closeChangeRole.emit()
   }
 
-  // Method to select a radio button and update the form control value
+  /**
+   * Select a role radio button and update the form control accordingly.
+   * @param index - 0 for Standard, any other value for Administrator
+   */
   selectRadio(index: number): void {
 
     this.selectedIndex = index;
@@ -79,7 +86,11 @@ export class ChangeRole {
     this.cdr.detectChanges();    
   }
 
-  // Submit data
+  /**
+   * Submit the new role for the selected member and notify the parent.
+   * @param event - the form submit event
+   * @param id - unused, kept for template call-site compatibility
+   */
   async handleChangeRole(event: any, id: string | undefined){
 
     event?.preventDefault()

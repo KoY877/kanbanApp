@@ -4,6 +4,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 
+/**
+ * Bind JWT-related settings from the {@code jwt.*} configuration prefix
+ * (secret, access token and refresh token expirations).
+ */
 @ConfigurationProperties(prefix = "jwt")
 @Data
 public class JwtProperties {

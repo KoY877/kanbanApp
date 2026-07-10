@@ -1,7 +1,6 @@
 package com.kanban.kanbanapp.config;
 
 import com.kanban.kanbanapp.service.auth.JwtService;
-import com.kanban.kanbanapp.service.auth.TokenBlacklistService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import org.springframework.lang.NonNull;
@@ -27,9 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtService jwtService;
-
-    @Autowired
-    private TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -61,12 +57,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtService.extractEmail(token);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // CHECK BLACKLIST
-                if (tokenBlacklistService.isBlacklisted(token)) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    return;
-                }
-
                 // Validate token
                 if (!jwtService.validateToken(token, email)) {
                     logger.warn("Invalid token");

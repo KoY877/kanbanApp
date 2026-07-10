@@ -13,14 +13,27 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+/**
+ * Custom entry point invoked by Spring Security whenever an unauthenticated
+ * request reaches a protected endpoint. Returns a JSON {@link ErrorResponse}
+ * instead of the default HTML error page.
+ */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    /**
+     * Write a 401 JSON error response for an unauthenticated request.
+     *
+     * @param request       the incoming HTTP request
+     * @param response      the HTTP response to write the error to
+     * @param authException the authentication failure that triggered this entry point
+     * @throws IOException if writing the response body fails
+     */
     @Override
-    public void commence(HttpServletRequest request, 
+    public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        
+
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 

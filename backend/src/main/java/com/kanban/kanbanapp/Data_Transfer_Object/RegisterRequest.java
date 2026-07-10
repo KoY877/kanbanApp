@@ -17,7 +17,7 @@ public class RegisterRequest {
     @Schema(
         description = "Username (3-50 characters)",
         example = "johndoe",
-        required = true,
+        nullable = false,
         minLength = 3,
         maxLength = 50
     )
@@ -28,7 +28,7 @@ public class RegisterRequest {
     @Schema(
         description = "User's email address",
         example = "john.doe@example.com",
-        required = true
+        nullable = false
     )
     @NotBlank(message = "L'email est requis")
     @Email(message = "L'email doit être valide")
@@ -37,7 +37,7 @@ public class RegisterRequest {
     @Schema(
         description = "User's password (minimum 12 characters)",
         example = "MyS3cur3P@ssw0rd!",
-        required = true,
+        nullable = false,
         minLength = 12
     )
     @NotBlank(message = "Le mot de passe est requis")

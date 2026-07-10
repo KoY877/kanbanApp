@@ -1,0 +1,56 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb-dev
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: tododb
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3309:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: todoApp_backend
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/tododb
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: 3600000
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend/src
+        - action: rebuild
+          path: ./backend/pom.xml
+
+  frontend:
+    build: ./frontend
+    container_name: todoApp_frontend
+    ports:
+      - "4202:80"
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: rebuild
+          path: ./frontend/package.json
+
+volumes:
+  mariadb_data:

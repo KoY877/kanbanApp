@@ -8,7 +8,6 @@ import com.kanban.kanbanapp.repository.KanbanColumnRepository;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +24,8 @@ import java.util.*;
 
 public class KanbanColumnController {
 
-    @Autowired
-    private KanbanColumnRepository kanbanColumnRepository;
-
-    @Autowired
-    private BoardRepository boardRepository;
+    private final KanbanColumnRepository kanbanColumnRepository;
+    private final BoardRepository boardRepository;
 
     /**
      * Retrieve all Kanban columns across all boards.
@@ -156,7 +152,16 @@ public class KanbanColumnController {
 
     }
 
-    // PATCH /column?id={id} -> patch a column by id
+    /**
+     * Partially update a Kanban column. Only the fields present in the
+     * request map are updated.
+     *
+     * @param id      the column UUID
+     * @param updates map of fields to update (columnName, limitWorkInProgress,
+     *                boardId)
+     * @return 200 with the updated column, 404 if the column or referenced
+     *         board is not found
+     */
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"New Column Name\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Patch a column", description = "Partially update a column by its ID")

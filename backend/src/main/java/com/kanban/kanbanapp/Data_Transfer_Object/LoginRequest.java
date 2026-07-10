@@ -19,8 +19,9 @@ public class LoginRequest {
     @Schema(
         description = "User's email address",
         example = "john.doe@example.com",
-        required = true
+        nullable = false
     )
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
@@ -28,7 +29,7 @@ public class LoginRequest {
     @Schema(
         description = "User's password (minimum 12 characters)",
         example = "MyS3cur3P@ssw0rd!",
-        required = true,
+        nullable = false,
         minLength = 12
     )
     @NotBlank(message = "Password is required")

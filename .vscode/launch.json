@@ -14,8 +14,14 @@
             "type": "java",
             "name": "KanbanApplication",
             "request": "launch",
-            "mainClass": "com.kanban.kanbanapp.KanbanApplication",
-            "projectName": "todoapp"
+            "mainClass": "com.kanban.kanbanapp.KanbanAppApplication",
+            "projectName": "todoapp",
+            "env": {
+                "DB_USERNAME": "${env:DB_USERNAME}",
+                "DB_PASSWORD": "${env:DB_PASSWORD}",
+                "JWT_SECRET": "${env:JWT_SECRET}",
+                "ALLOWED_ORIGINS": "http://localhost:8084,http://localhost:4202"
+            }
         }
     ]
 }

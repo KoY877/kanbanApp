@@ -33,8 +33,8 @@ export class TokenService {
   } | null = null;
 
   constructor() {
-    // Au démarrage, vérifier si on a déjà un token en mémoire
-    // (sera null après refresh de page → nécessite re-login ou refresh token)
+    // On startup, the in-memory token is always null after a page refresh
+    // (requires re-login or a token refresh via the httpOnly cookie)
     console.log('TokenService initialized - Tokens in memory only');
   }
 
@@ -75,7 +75,7 @@ export class TokenService {
    */
   setUserData(data: { userId: string; username: string; email: string; role: string }): void {
     this.userData = data;
-    // Garder userId en localStorage pour la compatibilité (non sensible)
+    // Keep userId in localStorage for compatibility (non-sensitive)
     localStorage.setItem('User-Id', data.userId);
     localStorage.setItem('UserName', data.username);
     localStorage.setItem('UserEmail', data.email);
@@ -115,26 +115,24 @@ export class TokenService {
     console.log('All tokens and user data cleared');
   }
 
-  // Dans token.service.ts
-
   /**
    * Attempt to restore the session at startup.
    * Uses the refreshToken from the httpOnly cookie.
    */
   async tryRestoreSession(): Promise<boolean> {
-    // Si on a déjà un token en mémoire, pas besoin de refresh
+    // If a token is already in memory, no refresh is needed
     if (this.accessToken) {
       return true;
     }
 
-    // Vérifier si l'utilisateur était connecté (userId en localStorage)
+    // Check whether the user was previously connected (userId in localStorage)
     const userId = localStorage.getItem('User-Id');
     if (!userId) {
-      return false; // Pas d'utilisateur précédemment connecté
+      return false; // No previously connected user
     }
 
     try {
-      // Le refresh utilisera automatiquement le cookie httpOnly
+      // The refresh call automatically uses the httpOnly cookie
       const response = await lastValueFrom(
         inject(AuthService).refreshAccessToken()
       );

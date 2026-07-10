@@ -25,12 +25,18 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<User> getAllUsers() {
         log.info("Fetching all users");
         return userRepository.findAll();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public User validateUser(String email, String password) {
         User user = userRepository.findByEmail(email)
@@ -49,7 +55,6 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(user);
             } else {
                 log.warn("Login attempt for locked account: {}", email);
-                // Exception correcte
                 throw new LockedException("Account is locked due to multiple failed login attempts. Please try again later.");
             }
         }
@@ -85,6 +90,9 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public User roleUser(String userId, Role newRole) {
         log.info("Updating role for user with ID: {}", userId);
@@ -103,6 +111,9 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public User registerUser(RegisterRequest request) {
         log.info("Registering new user with email: {}", request.getEmail());
@@ -119,9 +130,9 @@ public class UserServiceImpl implements UserService {
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // All registred users get Administrator role
+        // All registered users get the Administrator role
         user.setRole(Role.ADMINISTRATOR);
-        
+
         // Save user
         User savedUser = userRepository.save(user);
         log.info("User registered successfully with ID: {}", savedUser.getId());
@@ -129,18 +140,34 @@ public class UserServiceImpl implements UserService {
         return savedUser;
     }
 
+    /**
+     * Thrown when attempting to register a user with an email that is
+     * already in use.
+     */
     public class UserAlreadyExistsException extends RuntimeException {
+        /**
+         * @param email the email that already exists
+         */
         public UserAlreadyExistsException(String email) {
             super("User already exists with email: " + email);
         }
     }
 
+    /**
+     * Thrown when looking up a user by id that does not exist.
+     */
     public class UserNotFoundException extends RuntimeException {
+        /**
+         * @param userId the id that was not found
+         */
         public UserNotFoundException(String userId) {
             super("User not found with ID: " + userId);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deleteUserById(String userId) {
         log.info("Deleting user with ID: {}", userId);
@@ -156,6 +183,9 @@ public class UserServiceImpl implements UserService {
         log.info("User deleted successfully with ID: {}", validUserId);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public User updateUser(@NonNull String userId, @NonNull User updatedUser) {
         log.info("Updating user with ID: {}", userId);

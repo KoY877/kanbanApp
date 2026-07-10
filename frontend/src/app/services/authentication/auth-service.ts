@@ -69,7 +69,7 @@ export class AuthService {
       map(() => true),
       catchError((error) => {
         console.warn('Cannot restore session (invalid/expired cookie or network error)');
-        console.error('Détails:', error);
+        console.error('Details:', error);
         this.tokenService.clearAll();
         return of(false);
       })
@@ -127,7 +127,7 @@ export class AuthService {
         console.error('Message:', err.message);
         console.error('Body:', err.error);
 
-        // Si refresh échoue (401), nettoyer et déconnecter
+        // If the refresh fails (401), clear tokens and log out
         if (err.status === 401) {
           console.warn('Invalid refresh token - clearing tokens');
           this.tokenService.clearAll();  // Clear from memory
@@ -263,6 +263,12 @@ export class AuthService {
     );
   }
 
+  /**
+   * Log out the current user — calls the backend to revoke tokens and clear
+   * the httpOnly refresh-token cookie. Errors are swallowed so the client
+   * can always proceed with a local logout.
+   * @returns Observable<void> that completes once the call settles
+   */
   logout(): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/auth/logout`, {}, { withCredentials: true }).pipe(
       catchError(() => of(undefined as any))

@@ -1,0 +1,18 @@
+# Dependencies (rebuilt inside the image — never copy host binaries)
+node_modules/
+
+# Build output & caches
+dist/
+.angular/
+
+# Git
+.git
+.gitignore
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Docs & local env
+README.md
+.env

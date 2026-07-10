@@ -26,23 +26,32 @@ export class Description {
     this.form = this.formBuilder.group({
       description: [
         '',
-        [Validators.minLength(3),       // minimum 3 caracteres
-        Validators.pattern(/^[a-zA-Z\s]+$/)] // just letters and spaces
+        [Validators.minLength(3),       // minimum 3 characters
+        Validators.pattern(/^[a-zA-Z\s]+$/)] // letters and spaces only
       ]
     });
   }
 
+  /**
+   * Read the text currently selected by the user in the document.
+   * @returns the selected text, or an empty string if none
+   */
   getSelectedText(): string {
     const selection = window.getSelection();
     return selection ? selection.toString() : '';
   }
 
+  /**
+   * Wrap the currently selected text in markdown markers (bold/italic) and
+   * insert it back into the textarea.
+   * @param command - 'bold' or 'italic'
+   */
   format(command: string) {
     this.selectedText = this.getSelectedText();
-    console.log('Formatage de:', this.selectedText);
+    console.log('Formatting:', this.selectedText);
 
     if (!this.selectedText) {
-      console.log('Aucun texte sélectionné');
+      console.log('No text selected');
       return;
     }
 
@@ -58,23 +67,26 @@ export class Description {
 
         break;
       default:
-        console.log('Commande de formatage inconnue');
+        console.log('Unknown formatting command');
         return;
 
     }
 
-    // Remplacer la sélection par le texte formaté en Markdown
+    // Replace the selection with the markdown-formatted text
     document.execCommand('insertText', false, formattedText);
 
-    // Mettre à jour le FormControl
+    // Update the FormControl
     const content = this.textArea.nativeElement.textContent;
     this.description.setValue(content, { emitEvent: true });
 
-    console.log('Texte formaté:', formattedText);
+    console.log('Formatted text:', formattedText);
   }
 
+  /**
+   * Lifecycle hook: pre-fill the textarea with the initial description once
+   * the view is ready.
+   */
   ngAfterViewInit(): void {
-    // Pré-remplir le textArea avec la description initiale
     if (this.initialDescription && this.textArea) {
       this.textArea.nativeElement.textContent = this.initialDescription;
       this.description.setValue(this.initialDescription);
@@ -82,6 +94,7 @@ export class Description {
     }
   }
 
+  /** The description text FormControl. */
   get description(): FormControl{
     return this.form.get('description') as FormControl;
   }
@@ -92,27 +105,30 @@ export class Description {
 
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /**
+   * Convert the textarea's markdown markers to HTML and push the result
+   * back into both the DOM and the FormControl.
+   */
   showContent(): void {
 
-    // Recevoir le content de l´id textArea
     const content = this.textArea.nativeElement.textContent;
-    console.log('Contenu de la zone de texte:', content);
+    console.log('Text area content:', content);
 
-    // mettre le text entre ** ** en bold et entre __ __ en italic
+    // Turn **bold** and __italic__ markers into HTML tags
     const formattedContent = content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // bold
       .replace(/__(.*?)__/g, '<em>$1</em>'); // italic
-    console.log('Contenu formaté:', formattedContent);
+    console.log('Formatted content:', formattedContent);
 
     document.execCommand(formattedContent, false, '');
 
-    // Mettre à jour le FormControl avec le contenu formaté et affiché
-
+    // Update the FormControl with the formatted and displayed content
     const contentAfterFormat = this.textArea.nativeElement.innerHTML;
     this.description.setValue(contentAfterFormat, { emitEvent: true });
 
@@ -121,9 +137,13 @@ export class Description {
   isPreviewMode: boolean = false;
   originalContent: string = '';
 
+  /**
+   * Toggle between edit mode (raw markdown, editable) and preview mode
+   * (rendered HTML, read-only).
+   */
   togglePreview(): void {
     if (!this.isPreviewMode) {
-      // Passer en mode prévisualisation
+      // Switch to preview mode
       this.originalContent = this.textArea.nativeElement.textContent || '';
 
       const htmlContent = this.originalContent
@@ -134,21 +154,30 @@ export class Description {
       this.textArea.nativeElement.setAttribute('contenteditable', 'false');
       this.isPreviewMode = true;
     } else {
-      // Retour en mode édition
+      // Switch back to edit mode
       this.textArea.nativeElement.textContent = this.originalContent;
       this.textArea.nativeElement.setAttribute('contenteditable', 'true');
       this.isPreviewMode = false;
     }
   }
 
+  /**
+   * Force pasted clipboard content to be inserted as plain text (no rich
+   * formatting), to keep the markdown model consistent.
+   * @param event - the paste event
+   */
   onPaste(event: ClipboardEvent): void {
     event.preventDefault();
     const text = event.clipboardData?.getData('text/plain') || '';
     document.execCommand('insertText', false, text);
   }
 
+  /**
+   * Sync the description FormControl and emit descriptionChange whenever
+   * the textarea content changes (ignored while in preview mode).
+   * @param event - the contenteditable input event
+   */
   onContentChange(event: Event): void {
-    // Ne pas mettre à jour si on est en mode preview
     if (this.isPreviewMode) {
       return;
     }
@@ -156,7 +185,6 @@ export class Description {
     const target = event.target as HTMLElement;
     const content = target.textContent || '';
 
-    // Update the form control with the new content
     this.description.setValue(content, { emitEvent: true });
     this.descriptionChange.emit(content);
 

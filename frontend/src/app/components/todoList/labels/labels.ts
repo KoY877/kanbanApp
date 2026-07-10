@@ -39,15 +39,19 @@ export class Labels {
     this.form = fb.group({
       label: [
         '',
-        [Validators.minLength(3),       // minimum 3 caractères
-        Validators.maxLength(30),      // maximum 20 caractères
-        Validators.pattern(/^[a-zA-Z\s]+$/)] // seulement lettres et espaces
+        [Validators.minLength(3),       // minimum 3 characters
+        Validators.maxLength(30),      // maximum 30 characters
+        Validators.pattern(/^[a-zA-Z\s]+$/)] // letters and spaces only
       ],
       labels: this.fb.array([])
     });
   }
 
-  // Call ngOnchange, if @Input change
+  /**
+   * Lifecycle hook: reload the selected-labels FormArray whenever the
+   * `selectedLabels` @Input changes.
+   * @param changes - Angular's input change record
+   */
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedLabels'] && changes['selectedLabels'].currentValue) {
       this.loadSelectedLabels(changes['selectedLabels'].currentValue);
@@ -56,12 +60,14 @@ export class Labels {
     this.detectChange.detectChanges();
   }
 
-  // Charger les labels sélectionnés dans le FormArray
+  /**
+   * Rebuild the `labels` FormArray and the `allLabels` display list from a
+   * given set of labels, marking them all as checked.
+   * @param labels - labels as strings or `{ label: string }` objects
+   */
   private loadSelectedLabels(labels: any[]) {
-    // Vider le FormArray avant de le remplir
     this.labels.clear();
-    
-    // Charger les labels sélectionnés dans le FormArray
+
     if (Array.isArray(labels) && labels.length > 0) {
       labels.forEach((label: any) => {
         this.labels.push(this.fb.group({
@@ -69,8 +75,7 @@ export class Labels {
           checked: [true]
         }));
       });
-      
-      // Mettre à jour allLabels pour l'affichage
+
       this.allLabels = labels.map((label: any) => ({
         label: typeof label === 'string' ? label : label.label,
         checked: true
@@ -78,18 +83,20 @@ export class Labels {
     }
   }
 
-  // Get Id
+  /** Get the currently selected labels @Input value. */
   getLabels(): string | undefined {
     return this.selectedLabels;
   }
 
+  /**
+   * Lifecycle hook: load any pre-selected labels and subscribe to the
+   * label-input value changes.
+   */
   ngOnInit(): void {
-    // Charger les labels sélectionnés si disponibles
     if (this.selectedLabels && Array.isArray(this.selectedLabels) && this.selectedLabels.length > 0) {
       this.loadSelectedLabels(this.selectedLabels);
     }
 
-    // If label value change
     this.label.valueChanges.pipe(takeUntil(this.destroy$)).subscribe({
       next: (value) => {
 
@@ -97,20 +104,27 @@ export class Labels {
     });
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /** The new-label text input FormArray. */
   get label(): FormArray {
     return this.form.get('label') as FormArray;
   }
 
+  /** The FormArray backing the list of labels. */
   get labels(): FormArray {
     return this.form.get('labels') as FormArray;
   }
 
-  // Add a label to the list
+  /**
+   * Add the value typed in the label input to both the FormArray and the
+   * display list, if it is 3-30 characters and not already present.
+   * @param event - the keyboard event from the label input
+   */
   async addLabel(event: Event) {
 
     event.preventDefault()
@@ -121,58 +135,59 @@ export class Labels {
     const value = input.value.trim();
 
     if (value.length >= 3 && value.length <= 30) {
-      // Vérifier si le label existe déjà dans le FormArray
       const existsInFormArray = this.labels.value.some((l: any) => l.label === value);
 
       if (!existsInFormArray) {
-        // Ajouter au FormArray
         this.labels.push(this.fb.group({
           label: [value],
           checked: [true]
         }));
       }
 
-      // Vérifier si le label existe déjà dans allLabels
       const existsInAllLabels = this.allLabels.some((l: any) => l.label === value);
 
       if (!existsInAllLabels) {
-        // Ajouter à allLabels pour l'affichage
         this.allLabels.push({ label: value, checked: true });
       }
 
       this.label.reset();
     }
 
-    // Émettre la liste des labels cochés
+    // Emit the list of checked labels
     this.sendSelectedLabel.emit(this.allLabels);
 
     this.detectChange.detectChanges();
   }
 
-  // Remove label from display (allLabels)
+  /**
+   * Remove a label from the display list and uncheck it in the FormArray
+   * (without deleting the FormArray entry).
+   * @param event - the click event
+   * @param index - index of the label in `allLabels`
+   */
   removeLabelFromDisplay(event: any, index: number) {
     event.stopPropagation();
 
-    // Récupérer le label à retirer
     const labelToRemove = this.allLabels[index];
 
-    // Retirer le label de allLabels
     this.allLabels.splice(index, 1);
 
-    // Trouver le label dans le FormArray et le décocher
     const formArrayIndex = this.labels.value.findIndex((l: any) => l.label === labelToRemove.label);
     if (formArrayIndex > -1) {
       const labelFormGroup = this.labels.at(formArrayIndex);
       labelFormGroup.patchValue({ checked: false });
     }
 
-    // Émettre la liste mise à jour
     this.sendDeselectedLabel.emit(this.allLabels);
-    
+
     this.detectChange.detectChanges();
   }
 
-  // Remove label from FormArray
+  /**
+   * Remove a label entirely from the FormArray and the display list.
+   * @param event - the click event
+   * @param index - index of the label in the `labels` FormArray
+   */
   removeLabel(event: any, index: number) {
 
     event.stopPropagation();
@@ -181,19 +196,25 @@ export class Labels {
 
     this.allLabels = this.labels.value.filter((l: any) => l.checked !== false);
     this.sendDeselectedLabel.emit(this.allLabels);
-    
+
     this.detectChange.detectChanges();
   }
 
+  /** Close the labels dropdown. */
   handleCloseDropdown() {
     this.closeDropdownLabels.emit();
   }
 
+  /** Hide the "view all labels" panel. */
   handleCloseDropdownLabels() {
     this.isViewLabels = false;
     this.detectChange.detectChanges();
   }
 
+  /**
+   * Toggle the "view all labels" panel.
+   * @param event - expected to be the literal string "label"
+   */
   handleOpenLabel(event: string) {
     if (event === "label") {
       this.isViewLabels = !this.isViewLabels;
@@ -201,15 +222,20 @@ export class Labels {
     }
   }
 
+  /**
+   * Check or uncheck a label from the full label list, syncing both the
+   * FormArray and the display list, and notify the parent.
+   * @param event - the checkbox change event
+   * @param item - the label item being toggled (mutated in place for the view)
+   * @param index - the label's index in the `labels` FormArray
+   */
   handleSelectedLabel(event: any, item: any, index: number) {
     event.preventDefault();
 
     const target = event.target as HTMLInputElement;
 
-    // Si la checkbox est cochée
     if (target.checked) {
 
-      // Vérifier si le label existe déjà dans allLabels
       const alreadyExists = this.allLabels.some(
         (label: any) => label.label === target.value
       );
@@ -218,30 +244,23 @@ export class Labels {
         this.allLabels.push({ label: target.value, checked: true });
       }
 
-      // Mettre à jour le statut visuel
       item.checked = true;
 
-      // Mettre à jour le FormGroup
       const labelFormGroup = this.labels.at(index);
       labelFormGroup.patchValue({ checked: true });
 
-      // Envoyer au parent Add-Task
       this.sendSelectedLabel.emit(this.allLabels);
     } else {
 
-      // Si décoché, le retirer de allLabels
       this.allLabels = this.allLabels.filter(
         (label: any) => label.label !== target.value
       );
 
-      // Mettre à jour le statut visuel
       item.checked = false;
 
-      // Mettre à jour le FormGroup
       const labelFormGroup = this.labels.at(index);
       labelFormGroup.patchValue({ checked: false });
 
-      // Envoyer au parent Add-Task
       this.sendDeselectedLabel.emit(this.allLabels);
     }
 

@@ -257,7 +257,10 @@ export class Header implements OnInit, OnDestroy {
     this.message.messageSignUp(this.sign_up);
   }
 
-  // Handle user disconnection and clear local storage
+  /**
+   * Log the user out: revoke tokens on the backend, clear local state, and
+   * notify the rest of the app via Message.
+   */
   handleDisconnect(): void {
     this.authService.logout().subscribe({
       complete: () => {

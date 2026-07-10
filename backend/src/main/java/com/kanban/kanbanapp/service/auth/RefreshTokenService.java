@@ -45,7 +45,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setTokenFamily(UUID.randomUUID().toString()); // Créer nouvelle famille
+        refreshToken.setTokenFamily(UUID.randomUUID().toString()); // Create new token family
         refreshToken.setRevoked(false);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDuration));
         refreshToken.setCreatedDate(Instant.now());
@@ -135,7 +135,7 @@ public class RefreshTokenService {
                 if (secondsSinceRevocation < 30) {
                     System.out.println(
                             "Token already revoked " + secondsSinceRevocation + "s ago - probable race condition");
-                    System.out.println("   → Rejet de la tentative SANS détruire la famille");
+                    System.out.println("   -> Rejecting the attempt WITHOUT destroying the family");
                     throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                             "Token already used - please retry with the new token");
                 }
@@ -143,13 +143,13 @@ public class RefreshTokenService {
                 // ATTACK DETECTED: Token revoked long ago = real attack
                 System.err.println("TOKEN REUSE ATTACK DETECTED!");
                 System.err.println("   Token revoked " + secondsSinceRevocation + "s ago");
-                System.err.println("   → Révocation de toute la famille: " + oldToken.getTokenFamily());
+                System.err.println("   -> Revoking the entire family: " + oldToken.getTokenFamily());
                 revokeTokenFamily(oldToken.getTokenFamily());
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Token reuse attack detected - all sessions have been terminated for security");
             }
 
-            // Si revokedAt est null (ne devrait pas arriver), rejeter sans détruire
+            // If revokedAt is null (should not happen), reject without destroying the family
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token already revoked");
         }
 
@@ -190,6 +190,12 @@ public class RefreshTokenService {
         System.out.println("🔒 Revoked all tokens in family: " + tokenFamily);
     }
 
+    /**
+     * Revoke every refresh token belonging to a user.
+     * Used for a full logout across all devices.
+     *
+     * @param userId the user id
+     */
     public void revokeAllByUserId(@NonNull String userId) {
         List<RefreshToken> tokens = refreshTokenRepository.findByUserId(userId);
         for (RefreshToken token : tokens) {

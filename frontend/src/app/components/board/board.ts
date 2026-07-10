@@ -197,8 +197,8 @@ export class Board {
   }
 
   /**
-   *
-   * @param closeAll
+   * Close all open dropdowns and cancel the board-name edit, when requested.
+   * @param closeAll - true to close everything; ignored otherwise
    */
   handleCloseAllDropdown(closeAll: boolean | undefined) {
     if (closeAll === true) {
@@ -285,7 +285,7 @@ export class Board {
         this.entityService.putData('boards', this.boardId, updatedBoard)
       );
 
-      // Mettre à jour localement
+      // Update the local copy
       if (this.clickedBoard) {
         this.clickedBoard.name = this.editedBoardName.trim();
       }
@@ -367,7 +367,7 @@ export class Board {
   private initializeOwnerInfo(): void {
     const currentUserId = localStorage.getItem('User-Id');
 
-    // Vérifier si l'utilisateur est le propriétaire
+    // Check whether the current user owns the board
     this.isOwner = this.clickedBoard?.userId === currentUserId;
 
     if (this.isOwner || this.clickedBoard?.userId === undefined) {
@@ -451,6 +451,12 @@ export class Board {
     }));
   }
 
+  /**
+   * Check whether a click target belongs to an element that should never
+   * trigger dropdown closing (header, menu, dropdown trigger buttons...).
+   * @param target - the clicked DOM element
+   * @returns true if the click should be ignored
+   */
   private shouldIgnoreClick(target: HTMLElement): boolean {
     return !!(
       target.closest('app-header') ||

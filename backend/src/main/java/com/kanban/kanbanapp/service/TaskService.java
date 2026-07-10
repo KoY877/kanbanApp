@@ -26,6 +26,16 @@ public class TaskService {
     private final KanbanColumnRepository kanbanColumnRepository;
     private final MemberRepository memberRepository;
 
+    /**
+     * Create a new task in the given column, appending it at the end of the
+     * column's task order.
+     *
+     * @param request task creation payload (name, description, columnId, members...)
+     * @return the created and persisted task
+     * @throws RuntimeException if the target column is not found, or if a
+     *                          member id is invalid or does not belong to the
+     *                          column's board
+     */
     @Transactional
     public Task createTask(@NonNull TaskCreateRequest request) {
         String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
@@ -52,12 +62,25 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    /**
+     * Retrieve all tasks of a column, ordered by their position (taskOrder).
+     *
+     * @param columnId the column id
+     * @return the ordered list of tasks in the column
+     */
     @Transactional(readOnly = true)
     public List<Task> getTasksByColumn(@NonNull String columnId) {
         String validColumnId = java.util.Objects.requireNonNull(columnId, "Column ID cannot be null");
         return taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(validColumnId);
     }
 
+    /**
+     * Retrieve a single task by its id.
+     *
+     * @param taskId the task id
+     * @return the matching task
+     * @throws RuntimeException if no task exists with the given id
+     */
     @Transactional(readOnly = true)
     public Task getTaskById(@NonNull String taskId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
@@ -65,6 +88,12 @@ public class TaskService {
             .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
+    /**
+     * Delete a task by its id and reorder the remaining tasks in its column.
+     *
+     * @param taskId the task id
+     * @throws RuntimeException if no task exists with the given id
+     */
     @Transactional
     public void deleteTask(@NonNull String taskId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
@@ -78,6 +107,17 @@ public class TaskService {
         reorderColumnTasks(columnId);
     }
 
+    /**
+     * Update a task, replacing all its fields. If the task moves to a
+     * different column, both the source and target columns are reordered.
+     *
+     * @param taskId  the task id
+     * @param request the new task data
+     * @return the updated task
+     * @throws RuntimeException if the task or target column is not found, or
+     *                          if a member id is invalid or does not belong
+     *                          to the target column's board
+     */
     @Transactional
     public Task updateTask(@NonNull String taskId, @NonNull TaskCreateRequest request) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
@@ -118,7 +158,15 @@ public class TaskService {
         return savedTask;
     }
 
-    // Helper methods
+    /**
+     * Resolve and validate the members assigned to a task.
+     *
+     * @param memberIds ids of the members to assign, may be null or empty
+     * @param board     the board the task's column belongs to
+     * @return the resolved members, or an empty list if memberIds is null/empty
+     * @throws RuntimeException if a member id does not exist or does not
+     *                          belong to the given board
+     */
     private List<Member> resolveMembers(List<String> memberIds, Board board) {
         if (memberIds == null || memberIds.isEmpty()) {
             return new ArrayList<>();
@@ -140,6 +188,12 @@ public class TaskService {
         return members;
     }
 
+    /**
+     * Re-sequence the taskOrder of all tasks in a column to be contiguous
+     * starting from 0, based on their current relative order.
+     *
+     * @param columnId the column id
+     */
     private void reorderColumnTasks(String columnId) {
         List<Task> tasks = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(columnId);
         for (int index = 0; index < tasks.size(); index++) {
@@ -148,6 +202,12 @@ public class TaskService {
         taskRepository.saveAll(tasks);
     }
 
+    /**
+     * Return a mutable copy of the given list, or an empty list if null.
+     *
+     * @param values the source list, may be null
+     * @return a non-null mutable list
+     */
     private List<String> safeList(List<String> values) {
         return values == null ? new ArrayList<>() : new ArrayList<>(values);
     }

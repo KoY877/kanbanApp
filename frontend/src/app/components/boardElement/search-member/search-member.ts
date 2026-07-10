@@ -57,18 +57,22 @@ export class SearchMember {
 
   }
 
-   // Get currentStep
+   /** Get the current wizard step. */
   getCurrentStep(): number | undefined {
     return  this.currentStep;
   }
 
+  /**
+   * Lifecycle hook: wire up the debounced member search and subscribe to
+   * role-change events so the local member list stays in sync.
+   */
   ngOnInit(): void {
 
     this.searchControl.valueChanges
       .pipe(
         debounceTime(500),
         distinctUntilChanged(),
-        map((query) => query ?? ''),  // Convertit null/undefined en une chaîne vide
+        map((query) => query ?? ''),  // Convert null/undefined to an empty string
         tap(query => {
           if (query.trim() === '') {
             this.isResult = false;   // If search is empty, hide results
@@ -94,7 +98,7 @@ export class SearchMember {
       });
 
 
-      // Update actuel member role
+      // Update the current member's role in the local list
       this.aktuelMemberData.roleChangeData$.pipe(takeUntil(this.destroy$)).subscribe((msg) => {
 
       if(msg === null){
@@ -113,12 +117,17 @@ export class SearchMember {
 
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // If outside this component is clicked, send output on the board
+  /**
+   * When a click occurs outside this component, close the search dropdown
+   * and manage the wizard-step reset logic.
+   * @param event - the document click event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
@@ -148,6 +157,10 @@ export class SearchMember {
     }
   }
 
+  /**
+   * Resolve owner name/initials from localStorage when the current user
+   * matches the board owner.
+   */
   private initializeOwnerInfo(): void {
     const currentUserId = localStorage.getItem('User-Id');
 
@@ -168,7 +181,10 @@ export class SearchMember {
 
 
 
-  // Open Dropdown
+  /**
+   * Open the member-detail dropdown for a clicked member.
+   * @param event - the clicked member's email
+   */
   async handleOpenDropdown(event: string) {
 
     const currentBoard = await lastValueFrom(this.entityService.getDataById<BoardModel>('boards', this.getBoardId));
@@ -185,25 +201,36 @@ export class SearchMember {
     this.cdr.detectChanges();
   }
 
-  // Return to previous step
+  /** Return to the search step from the member-detail step. */
   prevStep() {
     if (this.currentStep === 2){
       this.currentStep = 1
     }
   }
 
+  /** Close the search-member dropdown. */
   handleCloseDropdown() {
     this.closeSearchMemberDP.emit()
   }
 
+  /** Mark the member dropdown as closed without emitting an event. */
   handleCloseDropdownMember() {
     this.dropdownSearchValue = false
   }
 
+  /**
+   * Track whether the nested change-role panel is currently open.
+   * @param $event - true if the change-role panel is open
+   */
   handleChangeRolestatus($event: any){
     this.isChangeRole = $event
   }
 
+ /**
+  * Pick a color from a fixed palette, either by index or at random.
+  * @param index - optional palette index; omit for a random color
+  * @returns a hex color string
+  */
  generateRandomColor(index?: number): string {
     const colors = [
       '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',

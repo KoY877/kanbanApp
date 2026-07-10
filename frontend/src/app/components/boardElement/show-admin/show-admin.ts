@@ -17,7 +17,11 @@ export class ShowAdmin {
 
   constructor(private elementRef: ElementRef) {}
 
-  // Close dropdown when clicking outside
+  /**
+   * Toggle the dropdown-open flag and notify the parent when a click
+   * occurs outside this component.
+   * @param event - the document click event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
@@ -29,6 +33,7 @@ export class ShowAdmin {
     }
   }
 
+  /** Close the admin (owner) info modal. */
   handleCloseDropdown() {
     this.closeMemberModal.emit();
   }

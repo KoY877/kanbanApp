@@ -38,6 +38,11 @@ export class List implements OnChanges {
 
   ngOnInit(): void {}
 
+  /**
+   * Lifecycle hook: when the clicked board changes, load its columns and
+   * fetch the tasks for each of them.
+   * @param changes - Angular's input change record
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['clikedBoard'] && this.clikedBoard?.[0]?.columns) {
       this.column = this.clikedBoard[0].columns;
@@ -45,10 +50,14 @@ export class List implements OnChanges {
     }
   }
 
+  /**
+   * Fetch the tasks of every column in parallel and attach them to their
+   * respective column objects.
+   */
   private loadTasksForColumns(): void {
     if (!this.column.length) return;
 
-    // Initialiser tasks comme tableau vide pour chaque colonne
+    // Initialize tasks as an empty array for each column
     this.column.forEach(col => {
       if (!col.tasks) col.tasks = [];
     });
@@ -68,6 +77,7 @@ export class List implements OnChanges {
     });
   }
 
+  /** The board's columns, or an empty array if none are loaded yet. */
   get filteredTasks() {
     if (this.clikedBoard && this.clikedBoard[0] && this.clikedBoard[0].columns) {
       return this.column;
@@ -75,19 +85,23 @@ export class List implements OnChanges {
     return [];
   }
 
+  /**
+   * Open the add-task modal for a given column, closing any open menu
+   * dropdowns and registering a one-shot outside-click listener to close it.
+   * @param columnId - the column to add the task to
+   */
   handleAddTask(columnId: string) {
-    // Ouvrir le modal d'ajout de tâche pour la colonne spécifiée
     this.selectedColumnId = columnId;
     this.isOpenTaskModal = true
     this.isEditTask = false
 
-    // Fermer tous les dropdowns ouverts
+    // Close all open menu dropdowns
     const dropdowns = this.elementRef.nativeElement.querySelectorAll('.menu-dropdown');
     dropdowns.forEach((dropdown: any) => {
       dropdown.classList.remove('active');
     });
 
-    // Ajouter un écouteur de clic pour détecter les clics en dehors du modal
+    // Register a click listener to detect clicks outside the modal
     const clickListener = (clickEvent: any) => {
       if (!this.elementRef.nativeElement.contains(clickEvent.target)) {
         this.isOpenTaskModal = false;
@@ -96,16 +110,19 @@ export class List implements OnChanges {
       }
     };
 
-    // Ajouter l'écouteur de clic au document
     document.addEventListener('click', clickListener);
   }
 
+  /** Close the add/edit task modal. */
   handleCloseTaskModal(){
     this.isOpenTaskModal = false
     this.isEditTask = false
   }
 
-  // handleTaskCreated(newTask: any) {
+  /**
+   * Append a newly created task to its column's local task list.
+   * @param newTask - the task returned by the backend
+   */
   handleTaskCreated(newTask: any) {
 
     const col = this.column.find(col => col.id === this.selectedColumnId);
@@ -116,6 +133,12 @@ export class List implements OnChanges {
     this.isOpenTaskModal = false;
   }
 
+ /**
+  * Handle a drag-and-drop task move, either reordering within a column or
+  * transferring it to another column (respecting its WIP limit), with an
+  * optimistic update rolled back on API failure.
+  * @param event - the CDK drag-drop event
+  */
  drop(event: CdkDragDrop<any[], any[]>) {
   if (event.previousContainer === event.container) {
     moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
@@ -124,16 +147,16 @@ export class List implements OnChanges {
     const targetCol = this.column.find(col => col.tasks === event.container.data);
     const targetColumnId = targetCol?.id;
 
-    // Vérifier la limite WIP
+    // Check the WIP limit
     if (targetCol?.limitWorkInProgress !== null && targetCol?.limitWorkInProgress !== undefined) {
       const currentCount = event.container.data.length;
       if (currentCount >= targetCol.limitWorkInProgress) {
-        return; // Limite atteinte → annuler le drop
+        return; // Limit reached -> cancel the drop
       }
     }
 
     if (targetColumnId && task?.id) {
-      // Update optimiste
+      // Optimistic update
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -157,16 +180,22 @@ export class List implements OnChanges {
             event.currentIndex,
             event.previousIndex
           );
-          console.error('Erreur lors du déplacement de la tâche:', err);
+          console.error('Error moving task:', err);
         }
       });
     }
   }
 }
+  /** CDK drop-list connection ids, one per column. */
   get connectedDropLists(): string[] {
     return this.column.map((_, i) => 'drop-list-' + i);
   }
 
+  /**
+   * Pick a color from a fixed palette for a column header, based on its index.
+   * @param num - the column index
+   * @returns a hex color string
+   */
   generateRandomColor(num: number): string {
     const colors = [
       '#5595E8', '#C9A700', '#A5889E', '#4CAF50', '#E57373',
@@ -175,16 +204,24 @@ export class List implements OnChanges {
     return colors[num % colors.length];
   }
 
+  /**
+   * Open the task modal in edit mode for the given task.
+   * @param task - the task to edit
+   */
   editTask(task: any) {
-    // Logique pour éditer la tâche
     this.isEditTask = true;
-    this.selectedTask = task;  // ← Stocker la tâche
+    this.selectedTask = task;
     this.selectedColumnId = task.columnId;
     this.isOpenTaskModal = true;
   }
 
+  /**
+   * Replace the updated task in its column's local task list and close the
+   * edit modal.
+   * @param updatedTask - the task returned by the backend after update
+   */
   handleTaskUpdated(updatedTask: any) {
-    // Trouver et mettre à jour la tâche dans la colonne
+    // Find and update the task within its column
     const column = this.column.find(col => col.id === updatedTask.columnId);
     if (column && column.tasks) {
       const taskIndex = column.tasks.findIndex(t => t.id === updatedTask.id);

@@ -21,6 +21,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
+
+/**
+ * Central Spring Security configuration: CORS, stateless sessions, JWT
+ * filter wiring, and the security beans (password encoder, authentication
+ * manager).
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -28,46 +34,55 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;  // <-- Ajouter
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CorsProperties corsProperties;
 
-  
+    /**
+     * Build the CORS configuration source from {@link CorsProperties}.
+     *
+     * @return the configured CORS source, applied to all endpoints
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Utiliser CorsProperties
+
         configuration.setAllowedOriginPatterns(
             Arrays.asList(corsProperties.getAllowedOrigins().split(","))
         );
-        
-        // Permettre toutes les méthodes HTTP
+
         configuration.setAllowedMethods(
             Arrays.asList(corsProperties.getAllowedMethods().split(","))
         );
-        
-        // Permettre tous les headers
+
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        
-        // Exposer les headers nécessaires
+
+        // Headers the frontend is allowed to read from the response
         configuration.setExposedHeaders(Arrays.asList(
-            "Authorization", 
+            "Authorization",
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
             "X-Rate-Limit-Remaining"
         ));
-        
-        // Permettre les credentials
+
         configuration.setAllowCredentials(true);
-        
-        // Cache preflight
+
+        // How long the browser may cache a preflight response
         configuration.setMaxAge(corsProperties.getMaxAge().longValue());
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
+    /**
+     * Configure the HTTP security filter chain: stateless sessions, CORS,
+     * disabled CSRF (not needed for a stateless JWT API), the custom JWT
+     * authentication entry point, public endpoints, and the JWT filter.
+     *
+     * @param http the HttpSecurity builder
+     * @return the built SecurityFilterChain
+     * @throws Exception if the security configuration cannot be built
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -76,9 +91,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            // Utiliser le custom entry point
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)  // <-- Modifier
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -97,17 +111,25 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Password encoder
+    /**
+     * Password encoder bean used to hash and verify user passwords.
+     *
+     * @return a BCrypt-based password encoder
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Authentication manager (login)
+    /**
+     * Expose Spring Security's AuthenticationManager for use in the login flow.
+     *
+     * @param config the authentication configuration
+     * @return the AuthenticationManager
+     * @throws Exception if the manager cannot be retrieved
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-  
 }

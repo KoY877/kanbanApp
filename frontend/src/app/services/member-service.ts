@@ -16,13 +16,22 @@ export class MemberService {
     private readonly tokenService: TokenService
   ) {}
 
-  // Verify authentication (the interceptor will add the header automatically)
+  /**
+   * Guard: throw if the user is not currently authenticated.
+   * The interceptor adds the Authorization header automatically; this only
+   * fails fast when there is no session at all.
+   */
   private ensureAuthenticated(): void {
     if (!this.tokenService.isAuthenticated() || !this.tokenService.getUserId()) {
       throw new Error('User not authenticated. Please sign in.');
     }
   }
 
+  /**
+   * Fetch all members belonging to a given board (client-side filtered).
+   * @param entity - API resource name (e.g. 'board/member')
+   * @param boardId - board id to filter members by
+   */
   getMembersByBoard<T extends { boardId?: string }>(entity: string, boardId?: string): Observable<T[]> {
     this.ensureAuthenticated();
 
@@ -34,6 +43,11 @@ export class MemberService {
     );
   }
 
+  /**
+   * Create a new member.
+   * @param entity - API resource name
+   * @param data - the member payload to POST
+   */
  addMemberData(entity: string, data: Members): Observable<Members> {
     this.ensureAuthenticated();
 
@@ -41,7 +55,11 @@ export class MemberService {
     return this.http.post<Members>(`${this.apiUrl}/${entity}`, data);
   }
 
-
+  /**
+   * Partially update an existing member (PATCH).
+   * @param entity - API resource name
+   * @param data - partial payload; must include an `id` field
+   */
   updateMemberData<T extends {id?: string}>(entity: string, data: T): Observable<T> {
     this.ensureAuthenticated();
 
@@ -52,6 +70,11 @@ export class MemberService {
     );
   }
 
+  /**
+   * Delete a member by id.
+   * @param entity - API resource name
+   * @param data - object carrying the `id` of the member to delete
+   */
   delete<T extends {id?: string}>(entity: string, data: T): Observable<T> {
     this.ensureAuthenticated();
 
@@ -61,7 +84,10 @@ export class MemberService {
     );
   }
 
-
+  /**
+   * Fetch all members of a given resource type.
+   * @param entity - API resource name
+   */
   getMemberData<T>(entity: string): Observable<T[]> {
     this.ensureAuthenticated();
 
@@ -69,6 +95,11 @@ export class MemberService {
     return this.http.get<T[]>(`${this.apiUrl}/${entity}`);
   }
 
+  /**
+   * Search members by name (client-side filtering on `step1.name`).
+   * @param entity - API resource name
+   * @param query - search string
+   */
   searchMemberData<T extends { step1: { name: string } }>(entity: string, query: string): Observable<T[]> {
     this.ensureAuthenticated();
 
@@ -82,6 +113,11 @@ export class MemberService {
     );
   }
 
+  /**
+   * Search members by email (client-side filtering).
+   * @param entity - API resource name
+   * @param query - search string matched against memberEmail
+   */
   searchDataEmail<T extends { memberEmail: string }>(entity: string, query: string): Observable<T[]> {
     this.ensureAuthenticated();
 

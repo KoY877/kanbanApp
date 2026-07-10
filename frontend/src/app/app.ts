@@ -16,11 +16,11 @@ export class App {
 
    
 
+  /**
+   * Toggle the close-all-dropdowns flag, propagated as an @Input to the
+   * Container component to close any open dropdown across the app.
+   */
   handleCloseAllDropdowns(): void {
      this.isCloseAllDropdown = !this.isCloseAllDropdown;
-    // // Appeler la méthode du container
-    // if (this.containerComponent) {
-    //   this.containerComponent.handleCloseAllDropdowns();
-    // }
   }
 }

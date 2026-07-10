@@ -20,11 +20,11 @@ import { AuthService } from '../services/authentication/auth-service';
 import { TokenService } from '../services/authentication/tokenService';
 import { Message } from '../services/message';
 
-// ─── État partagé du refresh (module-level, singleton) ───────────────────────
+// ─── Shared refresh state (module-level, singleton) ──────────────────────────
 let isRefreshing = false;
 let refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
-// ─── Constantes ──────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 const PUBLIC_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/refresh'];
 const RETRY_HEADER = 'X-Retry-Request';
 
@@ -85,38 +85,38 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService   = inject(TokenService);
   const messageService = inject(Message);
 
-  // 1. Endpoints publics : envoyer les cookies uniquement, sans Authorization
+  // 1. Public endpoints: send cookies only, no Authorization header
   if (isPublic(req.url)) {
     return next(req.clone({ withCredentials: true }));
   }
 
-  // 2. Pas de token en mémoire → tenter quand même, et retry via refresh si 401
+  // 2. No token in memory -> try anyway, and retry via refresh on 401
   const token = tokenService.getAccessToken();
 
   const requestWithOptionalToken = token
     ? cloneWithToken(req, token)
     : req.clone({ withCredentials: true });
 
-  // 3. Requête standard (avec ou sans token)
+  // 3. Standard request (with or without token)
   return next(requestWithOptionalToken).pipe(
     catchError((error: HttpErrorResponse): Observable<HttpEvent<unknown>> => {
-      // On ne traite que les 401 ; les 403, 405, etc. remontent directement
+      // Only handle 401; other statuses (403, 405, etc.) propagate directly
       if (error.status !== 401) {
         return throwError(() => error);
       }
 
-      // Une requête déjà retentée qui échoue encore → session vraiment expirée
+      // A request that was already retried and still fails -> session truly expired
       if (req.headers.has(RETRY_HEADER)) {
         console.error('The refreshed token is itself rejected by the backend.');
         return handleSessionExpired(tokenService, messageService, error);
       }
 
-      // ── Refresh en cours : mettre la requête en attente ──────────────────
+      // ── Refresh already in progress: queue the request ────────────────────
       if (isRefreshing) {
         return waitForRefreshAndRetry(req, next);
       }
 
-      // ── Lancer le refresh ─────────────────────────────────────────────────
+      // ── Launch a new refresh ──────────────────────────────────────────────
       return startRefresh(req, next, authService, tokenService, messageService);
     })
   );
@@ -148,14 +148,14 @@ function startRefresh(
       const newToken = response.accessToken;
 
       tokenService.setAccessToken(newToken);
-      refreshTokenSubject.next(newToken); // ← débloque les requêtes en attente
+      refreshTokenSubject.next(newToken); // Unblocks queued requests
 
       console.log('Token refreshed. New session active.');
-      // Les erreurs de la requête retentée (ex: 500) remontent normalement
+      // Errors from the retried request (e.g. 500) propagate normally
       return next(cloneWithToken(req, newToken, true));
     }),
     catchError(error => {
-      // Si isRefreshing est encore true → switchMap n'a pas tourné → c'est une erreur de refresh
+      // If isRefreshing is still true, switchMap never ran -> this is a refresh error
       if (isRefreshing) {
         isRefreshing = false;
         refreshTokenSubject.error(error);
@@ -163,7 +163,7 @@ function startRefresh(
         console.error('Refresh failed - session expired.', error);
         return handleSessionExpired(tokenService, messageService, error);
       }
-      // isRefreshing est false → switchMap a tourné → erreur de la requête retentée (ex: 500)
+      // isRefreshing is false -> switchMap ran -> error from the retried request (e.g. 500)
       return throwError(() => error);
     })
   );
@@ -181,7 +181,7 @@ function waitForRefreshAndRetry(
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
   return refreshTokenSubject.pipe(
-    // Ignore null values emitted while refresh is pending
+    // Ignore null values emitted while the refresh is pending
     filter((token): token is string => token !== null),
     take(1),
     switchMap(newToken => next(cloneWithToken(req, newToken, true))),

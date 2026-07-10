@@ -133,7 +133,14 @@ public class MemberController {
         return ResponseEntity.notFound().build();
     }
 
-    // PUT /board/member/{id} -> update a member by id
+    /**
+     * Full replacement update of a member.
+     *
+     * @param id      the member UUID
+     * @param request updated member data (memberEmail, role, boardId)
+     * @return 200 with the updated member, or 404 if not found or the referenced
+     *         board does not exist
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update a member", description = "Update a member by its ID")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
@@ -176,7 +183,14 @@ public class MemberController {
 
     }
 
-    // PATCH /member/{id} -> patch a member by id
+    /**
+     * Partial update of a member. Currently unimplemented (see commented-out
+     * logic below) and always returns 404.
+     *
+     * @param id      the member UUID
+     * @param updates map of fields to update
+     * @return 404 (not implemented)
+     */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Patch a member", description = "Partially update a member by its ID")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))

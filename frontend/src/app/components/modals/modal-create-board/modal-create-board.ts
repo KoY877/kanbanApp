@@ -66,53 +66,51 @@ export class ModalCreateBoard {
 
   }
 
+  /** Lifecycle hook: pre-populate the form with the 4 default columns. */
   ngOnInit() {
-    // Add 4 default columns
     this.addDefaultColumns()
   }
 
-  // Navigate to next step
+  /** Advance the wizard to the next step (capped at step 5). */
   nextStep() {
-    // Move to next step if current step is less than 5
     if (this.currentStep < 5) {
       this.currentStep++;
     }
   }
 
-  // Return to previous step
+  /** Go back to the previous wizard step (floored at step 0). */
   prevStep() {
-    // Move to previous step if current step is greater than 0
     if (this.currentStep > 0) {
       this.currentStep--;
     }
   }
 
-  // Quick access to name FormArray
+  /** Quick access to the `name` form control. */
   get formControls() : FormArray{
     return this.form.get('name') as FormArray;
   }
 
-  // Quick access to row FormArray
+  /** The FormArray backing the column rows (step 1). */
   get columns(): FormArray{
     return this.form.get('columns') as FormArray;
   }
 
-  // Quick access to added_columns FormArray
+  /** The FormArray backing the confirmed columns (steps 2+). */
   get added_columns(): FormArray{
     return this.form.get('added_columns') as FormArray;
   }
 
-  // Quick access to email FormArray
+  /** Quick access to the `email` form control. */
   get email(): FormArray{
     return this.form.get('email') as FormArray;
   }
 
-  // Quick access to members FormArray
+  /** The FormArray backing the members staged for invitation. */
   get members(): FormArray{
     return this.form.get('members') as FormArray;
   }
 
-  // Add Row with default value
+  /** Seed the `columns` FormArray with the 4 standard Kanban columns. */
   addDefaultColumns(): void {
     // Default Columns
     this.defaultColumns = [
@@ -130,7 +128,7 @@ export class ModalCreateBoard {
     });
   }
 
-  // Add a new row
+  /** Append a new empty column row to the `columns` FormArray. */
   addRow() {
     // Push empty row in FormArray
     this.columns.push(this.formBuilder.group({
@@ -146,7 +144,10 @@ export class ModalCreateBoard {
     }
   }
 
-  // Delete a row at the specified index
+  /**
+   * Remove a column row at the given index (a single row is always kept).
+   * @param index - index of the row to remove in the `columns` FormArray
+   */
   removeRow(index: number) {
     // Remove row if columns.length > 1
     if (this.columns.length > 1) {
@@ -162,42 +163,49 @@ export class ModalCreateBoard {
     }
   }
 
-  // Draggable
+  /**
+   * Record the index of the column row being dragged.
+   * @param index - the dragged row's index
+   */
   onDragStart(index: any): void {
-    // Store the index of the dragged row
     this.draggedIndex = index;
   }
 
-  // Drag end
+  /** Clear the dragged-row index once dragging ends. */
   onDragEnd(): void {
-    // Clear the dragged index
     this.draggedIndex = null;
   }
 
-  // Drop event
+  /**
+   * Reorder the column rows by moving the dragged row to the drop target.
+   * @param event - the native drag-drop event
+   * @param targetIndex - index the row was dropped onto
+   */
   onDrop(event: DragEvent, targetIndex: any): void {
-    // Prevent default behavior
     event.preventDefault();
 
-    // Reorder the rows based on the dragged index and target index
     if(this.draggedIndex !== null && this.draggedIndex !== targetIndex) {
-      // Get the dragged row and insert it at the target index
       const draggedRow = this.columns.at(this.draggedIndex);
       this.columns.removeAt(this.draggedIndex);
       this.columns.insert(targetIndex, draggedRow);
     }
 
-    // Clear the dragged index
     this.draggedIndex = null;
   }
 
-  // Allow drop event
+  /**
+   * Allow a drop by preventing the default dragover behavior.
+   * @param event - the native dragover event
+   */
   onDragOver(event: DragEvent): void {
-    // Prevent default behavior to allow dropping
     event.preventDefault();
   }
 
-  // Go to Step 1
+  /**
+   * Validate the board name and, if it doesn't already exist, advance to
+   * step 2 (columns).
+   * @param event - the form submit event
+   */
   async handleNextStepPage_1(event?: Event){
     event?.preventDefault()
     this.isSubmitted = true;
@@ -216,7 +224,10 @@ export class ModalCreateBoard {
     }
   }
 
-  // Verify if name exists in DB
+  /**
+   * Check whether a board with the same name already exists for this user
+   * and, if not, advance the wizard to step 2.
+   */
   async verifyIfNameExistsInDB (){
     // Get all board data
     let allBoadData = await lastValueFrom(this.entityService.getData("boards/all"));
@@ -238,7 +249,10 @@ export class ModalCreateBoard {
     }
   }
 
-  // Go to Step 2
+  /**
+   * Commit the entered column names into `added_columns`, set the initial
+   * task/global-option selection, and advance to step 3.
+   */
   handleNextStepPage_2() {
     // Get submited columns data
     this.submitColumns = this.form.value.columns;
@@ -268,7 +282,11 @@ export class ModalCreateBoard {
     this.nextStep();
   }
 
-  // Push columns data in columns and added_columns Array
+  /**
+   * Push a submitted column into `added_columns`, defaulting
+   * `limitWorkInProgress` to 3 for the "In progress" column.
+   * @param item - the submitted column data (`columnName`)
+   */
   pushColumnsDataInArray (item : any ){
     // Push submited data in array columns
     if(item.columnName === "In progress"){
@@ -287,18 +305,21 @@ export class ModalCreateBoard {
     }
   }
 
-  // Go to step 1 (from Step 2)
+  /**
+   * Return from step 2 to step 1, restoring the `columns` FormArray from
+   * `added_columns` (falling back to `submitColumns`).
+   */
   handlePrevStep() {
-    // Restaurer les colonnes depuis added_columns
+    // Restore the columns from added_columns
     this.columns.clear();
 
-    // Source de données : priorité à added_columns, puis submitColumns en fallback
+    // Data source: prefer added_columns, fall back to submitColumns
     const columnsData = this.added_columns.length > 0
       ? this.added_columns.value
       : this.submitColumns;
 
     if (columnsData && columnsData.length > 0) {
-      // Repeupler le FormArray columns
+      // Repopulate the columns FormArray
       columnsData.forEach((item: any) => {
         this.columns.push(this.formBuilder.group({
           columnName: [item.columnName || '']
@@ -316,35 +337,37 @@ export class ModalCreateBoard {
     this.prevStep();
   }
 
-  // Show Text more or less
+  /** Toggle the expanded/collapsed state of a truncated text block. */
   toggleText() {
     this.isExpanded = !this.isExpanded
   }
 
-
+  /**
+   * Set the default "selected task column" and "global option" based on
+   * whether a "Done" column exists among `added_columns`.
+   */
   setInitialSelection(): void {
-    // Trouver le dernier index de added_columns qui a une valeur pour columnName
+    // Find the last added_columns index that has a columnName value
     const lastWithValueIndex = this.added_columns.controls
       .map((control, index) => ({ control, index }))
-      .filter(({ control }) => control.get('columnName')?.value) // Filtrer les champs avec des valeurs
+      .filter(({ control }) => control.get('columnName')?.value)
       .map(({ index }) => index)
-      .pop(); // Récupérer le dernier index avec une valeur
+      .pop();
 
-    // Trouver l´index de la colonne "Done" dans added_columns
+    // Find the index of the "Done" column in added_columns
     const doneColumnIndex = this.added_columns.controls
       .map((control, index) => ({ control, index }))
       .find(({ control }) => control.get('columnName')?.value === 'Done')?.index;
 
-
-    // Si un index valide est trouvé, définir la valeur par défaut
+    // If a "Done" column exists, default to it; otherwise use the last column
     if (doneColumnIndex !== undefined) {
-      this.form.get('selectedTask')?.setValue('Done'); // Affecter "Done" comme valeur par défaut
+      this.form.get('selectedTask')?.setValue('Done');
     } else if (lastWithValueIndex !== undefined) {
       const initialTask = this.added_columns.at(lastWithValueIndex).get('columnName')?.value;
-      this.form.get('selectedTask')?.setValue(initialTask); // Affecter la valeur par défaut
+      this.form.get('selectedTask')?.setValue(initialTask);
     }
 
-    // Global option : "Add a Done column for me" si la colonne "Done" n´existe pas, sinon "No, I will add a Done column by myself"
+    // Global option: offer to add a "Done" column automatically if none exists
     if (doneColumnIndex === undefined) {
       this.form.get('globalOption')?.setValue('Add a Done column for me');
     } else {
@@ -352,6 +375,10 @@ export class ModalCreateBoard {
     }
   }
 
+  /**
+   * Whether a given column index is the last one carrying a value.
+   * @param index - the column index to check
+   */
   isLastWithValue(index: number): boolean {
     const lastWithValueIndex = this.added_columns.controls
       .map((control, idx) => ({ control, idx }))
@@ -361,8 +388,12 @@ export class ModalCreateBoard {
     return index === lastWithValueIndex;
   }
 
+  /**
+   * Whether a role/task radio should be disabled because another one is
+   * already selected.
+   * @param type - the radio group type ('task' or 'global')
+   */
   isRadioDisabled(type: 'task' | 'global'): boolean {
-    // Désactive tous les autres radios sauf celui sélectionné
     if (type === 'task') {
       return this.selectedIndex !== null ;
     }
@@ -371,27 +402,30 @@ export class ModalCreateBoard {
 
   }
 
-  // Step 3
+  /**
+   * Move to the WIP-limit step: reorder `added_columns` so "Done" is last,
+   * optionally auto-add a "Done" column, then advance to step 4.
+   */
   handleLimitProgress() {
     this.limitProgress = true;
 
-    // Sauvegarder les données AVANT de clear
+    // Save the data BEFORE clearing
     this.step3_columns = this.form.value.added_columns;
 
-    // Remove the object "Done"
+    // Remove the "Done" object
     const value = this.step3_columns.find(item => item.columnName === "Done")
     this.step3_columns = this.step3_columns.filter(item => item.columnName !== "Done")
 
-    // Push object "Done" at end, if it exists
+    // Push the "Done" object at the end, if it exists
     if (value) {
       this.step3_columns.push(value)
     }
 
-    // Delete column data AVANT de repeupler
+    // Clear column data BEFORE repopulating
     this.columns.clear()
     this.added_columns.clear()
 
-    // Repeupler avec les données sauvegardées (UN SEUL PUSH par item)
+    // Repopulate with the saved data (a single push per item, no duplication)
     this.step3_columns.forEach((item) => {
       if (item.columnName === "Done") {
         this.isDone = true
@@ -399,24 +433,25 @@ export class ModalCreateBoard {
         this.isDoneDeleted = true
       }
 
-      // UN SEUL PUSH (pas de duplication)
       this.added_columns.push(this.formBuilder.group({
         columnName: [item.columnName],
         limitWorkInProgress: [item.limitWorkInProgress]
       }))
     })
 
-    // If "Add" Column is checked
+    // If the "Add a Done column" option is checked
     this.handleAddColumn(value);
 
     this.nextStep()
   }
 
-  // Add Columns
+  /**
+   * Auto-append a "Done" column when the user opted in and no "Done"
+   * column already exists.
+   * @param value - the existing "Done" column data, if any
+   */
   handleAddColumn(value: String) {
-    // Add column Done, if "Add a Done column for me" is checked
     if (!value && (this.form.value.globalOption === 'Add a Done column for me')) {
-      // UN SEUL PUSH avec le bon nom de propriété (columnName, pas value)
       this.added_columns.push(this.formBuilder.group({
         columnName: ['Done'],
         limitWorkInProgress: []
@@ -424,21 +459,22 @@ export class ModalCreateBoard {
     }
   }
 
-  // Go to Step 1
+  /**
+   * Return from the WIP-limit step to step 2, keeping the current edits
+   * staged in `step3_columns` for reuse.
+   */
   handlePrevTaskStep() {
-    // Sauvegarder les modifications actuelles de l'utilisateur
     this.step3_columns = this.form.value.added_columns;
-
-    // Previous step (les données sont déjà dans step3_columns pour réutilisation)
     this.prevStep();
   }
 
-  // Go to Step 2
- // Go to Step 2 (from Step 3)
+  /**
+   * Return from step 3 to step 2, restoring `columns` from `step3_columns`.
+   */
   handlePrevChoiceStep() {
     this.limitProgress = false;
 
-    // Restaurer columns depuis step3_columns pour pouvoir revenir au Step 1
+    // Restore columns from step3_columns so we can go back to step 1
     if (this.step3_columns && this.step3_columns.length > 0) {
       this.columns.clear();
       this.step3_columns.forEach((item: any) => {
@@ -453,47 +489,43 @@ export class ModalCreateBoard {
     this.prevStep();
   }
 
+  /** Reset to step 3 and immediately advance to step 4 (invite members). */
   handleInviteMember0(){
     this.limitProgress = false;
-
-    // Renitialize currentstep
     this.currentStep = 3;
-
     this.nextStep()
   }
 
-  // Step 4
+  /** Advance to step 4 (invite members). */
   handleInviteMember1(){
     this.limitProgress = false;
-
     this.nextStep()
   }
 
-   // Go to Step 3
+  /** Return to step 3 (WIP limits). */
   handlePrevProgressStep(){
     this.prevStep()
   }
 
-  // Step 4
+  /**
+   * Validate the entered email and stage it as a new member invite with the
+   * default "Standard" role.
+   * @param event - the form submit event
+   */
   inviteMember(event: any) {
     event?.preventDefault()
-    // Receive email value
     const emailValue = this.form.value.email;
 
-    // Regex to valid email addresse
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     if(emailValue && emailRegex.test(emailValue))
     {
-      // Add email in memberColumns array
-
       this.isEmailCreate = true
       this.members.push(this.formBuilder.group({
         memberEmail: [emailValue],
         role: ['Standard']
       })),
       this.email.reset()
-
 
       this.isSubmitted = false
     } else {
@@ -503,16 +535,22 @@ export class ModalCreateBoard {
 
   }
 
-  // Remove member
+  /**
+   * Remove a staged member invite.
+   * @param index - index of the member in the `members` FormArray
+   */
   removeMember(index: number){
     if (this.members.length > 0) {
       this.members.removeAt(index );
     }
   }
 
-  // Submit data
+  /**
+   * Create the board, then persist its columns and staged member invites,
+   * notifying the rest of the app and closing the modal on success.
+   * @param event - the form submit event
+   */
   async handleSubmit(event: any){
-    // Prevent default behavior
     event?.preventDefault()
     // Mark all form controls as touched to trigger validation messages
     this.form.markAllAsTouched()
@@ -613,19 +651,22 @@ export class ModalCreateBoard {
       alert(this.errorMessage);
     }
   }
-   // Fermer le modal
+  /** Close the create-board modal. */
   handleCloseModal() {
     this.closeModal.emit();
   }
 
-  // Fermer en cliquant sur le backdrop
+  /**
+   * Close the modal when the backdrop (outside the dialog) is clicked.
+   * @param event - the click event
+   */
   handleBackdropClick(event: MouseEvent) {
     if ((event.target as HTMLElement).classList.contains('modal-backdrop')) {
       this.handleCloseModal();
     }
   }
 
-  // Fermer avec la touche Escape
+  /** Close the modal when the Escape key is pressed. */
   @HostListener('document:keydown.escape')
   handleEscapeKey() {
     this.handleCloseModal();

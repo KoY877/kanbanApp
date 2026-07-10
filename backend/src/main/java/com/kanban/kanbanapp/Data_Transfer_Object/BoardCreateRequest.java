@@ -11,7 +11,7 @@ import java.util.List;
 @Schema(description = "Request DTO for creating a new board")
 public class BoardCreateRequest {
     
-    @Schema(description = "Board name", example = "Sprint 2024-Q2", required = true)
+    @Schema(description = "Board name", example = "Sprint 2024-Q2", nullable = false)
     private String name;
     
     @Schema(description = "Default task template", example = "User Story")
@@ -20,7 +20,7 @@ public class BoardCreateRequest {
     @Schema(description = "Global board option", example = "Agile")
     private String globalOption;
     
-    @Schema(description = "User ID of the board owner", example = "user-123", required = true)
+    @Schema(description = "User ID of the board owner", example = "user-123", nullable = false)
     private String userId;
     
     @Schema(description = "List of initial column names")

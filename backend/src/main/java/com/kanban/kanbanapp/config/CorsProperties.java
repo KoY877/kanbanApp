@@ -4,6 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 
+/**
+ * Bind CORS-related settings from the {@code cors.*} configuration prefix.
+ */
 @ConfigurationProperties(prefix = "cors")
 @Data
 public class CorsProperties {

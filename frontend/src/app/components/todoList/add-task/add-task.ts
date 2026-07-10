@@ -28,8 +28,8 @@ export class AddTask {
   @Input() currentBoard!: any;
   @Input() isTaskOpen: boolean = false;
   @Input() isEditTask: boolean = false;
-  @Input() taskToEdit: any = null;  // ← Ajouter
-  @Output() taskUpdated = new EventEmitter<any>();  // ← Ajouter
+  @Input() taskToEdit: any = null;
+  @Output() taskUpdated = new EventEmitter<any>();
   @Input() columnId!: string;
   @Output() closeTaskModal: EventEmitter<void> = new EventEmitter<void>();
   @Output() closeTimeModal: EventEmitter<void> = new EventEmitter<void>();
@@ -75,6 +75,10 @@ export class AddTask {
     });
   }
 
+  /**
+   * Lifecycle hook: populate the color choices and subscribe to the
+   * members-dropdown open/close events.
+   */
   ngOnInit(): void {
     this.handleColorArray();
 
@@ -84,15 +88,19 @@ export class AddTask {
     });
   }
 
+  /**
+   * Lifecycle hook: when editing an existing task, pre-fill the form,
+   * selected members/labels, color and time from `taskToEdit`.
+   */
   ngAfterViewInit(): void {
-    // Pré-remplir après l'initialisation de la vue
+    // Pre-fill after the view has initialized
     if (this.isEditTask && this.taskToEdit) {
       this.form.patchValue({
         name: this.taskToEdit.name,
         description: this.taskToEdit.description || '',
       });
 
-      // Pré-remplir les membres avec la propriété 'checked: true'
+      // Pre-fill members, marking them as 'checked: true'
       if (this.taskToEdit.members?.length) {
         this.selectedMembers = this.taskToEdit.members.map((m: any) => ({
           ...m,
@@ -101,7 +109,7 @@ export class AddTask {
         this.isMemberSelected = true;
       }
 
-      // Pré-remplir les labels
+      // Pre-fill labels
       if (this.taskToEdit.labels?.length) {
         this.selectedLabels = this.taskToEdit.labels.map((label: string | any) => ({
           label: typeof label === 'string' ? label : label.label || label,
@@ -110,7 +118,7 @@ export class AddTask {
         this.isLabelSelected = true;
       }
 
-      // Pré-remplir la couleur
+      // Pre-fill the color
       if (this.taskToEdit.colors?.[0]) {
         const color = this.defaultColors.find(c => c.colorChoice === this.taskToEdit.colors[0]);
         if (color) {
@@ -118,7 +126,7 @@ export class AddTask {
         }
       }
 
-      // Gérer le temps
+      // Handle the time estimate
       if (this.taskToEdit.time) {
         const timeValue = this.taskToEdit.time.toString().split(':')[0];
         this.time = parseInt(timeValue);
@@ -130,20 +138,28 @@ export class AddTask {
     }
   }
 
+  /** Lifecycle hook: complete the destroy$ subject to unsubscribe all pipes. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /** The FormArray of available color choices. */
   get colors(): FormArray {
     return this.form?.get('colors') as FormArray;
   }
 
+  /** The FormArray of available label choices. */
   get labels(): FormArray {
     return this.form?.get('labels') as FormArray;
   }
 
-  // If outside this component is clicked, send output on the board
+  /**
+   * When a click occurs outside this component while the task modal is
+   * open, close any open sub-panel (members/labels/description/time) first,
+   * or emit clickOutside if none is open.
+   * @param event - the document click event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
@@ -165,12 +181,15 @@ export class AddTask {
     }
   }
 
-  // Update the selected item when a color is selected
+  /**
+   * Update the selected color swatch.
+   * @param data - a form control change event carrying the new color value
+   */
   selectItem(data: any) {
-    this.selectedItem = data.value; //  Updates the selected item
+    this.selectedItem = data.value;
   }
 
-  // Add default color in defaultColor array
+  /** Populate the default color palette and its backing FormArray. */
   handleColorArray() {
     this.defaultColors = [
       { name: 'Yellow', colorChoice: '#f5cc00', bgColor: '#ffffe0' },
@@ -190,10 +209,14 @@ export class AddTask {
     return this.colors
   }
 
-  // Open or close Dropdown menu
+  /**
+   * Toggle one of the sub-panels (member/label/description/time), closing
+   * the others.
+   * @param event - which panel to toggle: 'member' | 'label' | 'description' | 'time'
+   * @returns the current members list (for the 'member' case) or void
+   */
   handleDropdown(event: string) {
 
-    // for Members
     // for Members
 if (event === 'member') {
   if (this.isMembers === false) {
@@ -202,10 +225,10 @@ if (event === 'member') {
     this.isDescription = false;
     this.isEstimateTime = false;
 
-    // Charger les membres du board
+    // Load the board's members
     this.members = this.currentBoard[0].members;
 
-    // Si en mode édition, marquer les membres sélectionnés comme cochés
+    // In edit mode, mark the already-selected members as checked
     if (this.isEditTask && this.selectedMembers.length > 0) {
       this.members = this.members.map((member: any) => ({
         ...member,
@@ -259,7 +282,12 @@ if (event === 'member') {
     return this.members
   }
 
-  // Receive and show selected Members
+  /**
+   * Receive the list of newly checked members and merge them into the
+   * selected-members list.
+   * @param event - array of member objects that were checked
+   * @returns the updated selected members list
+   */
   handleSelectedMember(event: any) {
     this.selectedMember = event
 
@@ -282,26 +310,33 @@ if (event === 'member') {
     return this.selectedMembers;
   }
 
-  // Remove deselected Members
+  /**
+   * Remove a deselected member from the selected-members list.
+   * @param event - the deselected member's email
+   * @returns the updated selected members list
+   */
   handleDeselectedMember(event: any) {
-    // event contient l'email du membre désélectionné
+    // event carries the deselected member's email
     this.selectedMembers = this.selectedMembers?.filter((item: any) => {
       const itemEmail = item?.memberEmail || item;
       return itemEmail !== event;
     });
 
-    // Si aucun membre n'est sélectionné, masquer la section
+    // Hide the section if no member remains selected
     if (this.selectedMembers.length === 0) {
       this.isMemberSelected = false;
     }
 
-    // Forcer la détection des changements pour mettre à jour l'affichage
     this.cdr.detectChanges();
 
     return this.selectedMembers;
   }
 
-  // Receive and show selected Labels
+  /**
+   * Receive the list of currently checked labels.
+   * @param event - array of checked label objects
+   * @returns the updated selected labels list
+   */
   handleSelectedLabel(event: any) {
 
     this.selectedLabel = event
@@ -319,7 +354,11 @@ if (event === 'member') {
     return this.selectedLabels
   }
 
-  // Remove deselected Labels
+  /**
+   * Update the selected labels after a label is deselected.
+   * @param event - the updated array of selected labels
+   * @returns the updated selected labels list
+   */
   handleDeselectedLabel(event: any) {
     this.selectedLabels = event || []
 
@@ -327,21 +366,25 @@ if (event === 'member') {
       this.isLabelSelected = false
     }
 
-    // Forcer la détection des changements pour mettre à jour l'affichage
     this.cdr.detectChanges();
 
     return this.selectedLabels
   }
 
+  /**
+   * Sync the description form control from the nested Description component.
+   * @param value - the new description text
+   */
   handleDescriptionChange(value: string) {
     this.form.get('description')?.setValue(value, { emitEvent: false });
   }
 
+  /** Close the add/edit task modal. */
   handleCloseModal() {
     this.closeTaskModal.emit()
   }
 
-  // handle Time event
+  /** Read the time-estimate form control and flag whether it has a value. */
   handleAddTime() {
     this.time = this.form.get('time')?.value;
 
@@ -352,6 +395,10 @@ if (event === 'member') {
     }
   }
 
+  /**
+   * Build the task payload from the form and either update the task being
+   * edited or create a new one.
+   */
   handleSubmitAddTask() {
   if (this.form.get('name')?.invalid) return;
 
@@ -366,7 +413,7 @@ if (event === 'member') {
   };
 
   if (this.isEditTask && this.taskToEdit) {
-    // Mode édition
+    // Edit mode
     this.entityService.updateData('tasks', { ...taskData, id: this.taskToEdit.id })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -377,7 +424,7 @@ if (event === 'member') {
         error: (err) => console.error('Error updating task:', err),
       });
   } else {
-    // Mode création
+    // Creation mode
     this.entityService.addData<any>('tasks', taskData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({

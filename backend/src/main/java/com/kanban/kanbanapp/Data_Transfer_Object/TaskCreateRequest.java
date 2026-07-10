@@ -19,7 +19,7 @@ public class TaskCreateRequest {
     @Schema(
         description = "Task name/title", 
         example = "Implement user authentication", 
-        required = true,
+        nullable = false,
         maxLength = 255
     )
     @NotBlank(message = "Task name is required")
