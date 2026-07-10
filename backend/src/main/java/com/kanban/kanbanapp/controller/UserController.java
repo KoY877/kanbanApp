@@ -1,5 +1,6 @@
 package com.kanban.kanbanapp.controller;
 
+import com.kanban.kanbanapp.Data_Transfer_Object.UserResponse;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.auth.UserService;
@@ -43,9 +44,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<User>> getAll() {
+    public ResponseEntity<List<UserResponse>> getAll() {
         log.info("Request to get all users");
-        List<User> users = userService.getAllUsers();
+        List<UserResponse> users = userService.getAllUsers().stream()
+                .map(UserResponse::fromEntity)
+                .toList();
         return ResponseEntity.ok(users);
     }
 
@@ -58,9 +61,10 @@ public class UserController {
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get user by ID", description = "Retrieve a specific user by their ID")
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<User> getUserById(@PathVariable @NonNull String id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable @NonNull String id) {
         log.info("Request to get user with id: {}", id);
         return userRepository.findById(id)
+                .map(UserResponse::fromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -103,7 +107,7 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update user profile", description = "Update the authenticated user's profile (username, email, password)")
     @PatchMapping("/profile/{id}")
-    public ResponseEntity<User> updateProfile(@PathVariable @NonNull String id, @RequestBody Map<String, String> updates) {
+    public ResponseEntity<UserResponse> updateProfile(@PathVariable @NonNull String id, @RequestBody Map<String, String> updates) {
         User user = getAuthenticatedUser();
 
         // Partial update - only provided fields are updated
@@ -117,7 +121,7 @@ public class UserController {
 
         // Password handling with hashing
         if (updates.containsKey("password") && updates.get("password") != null) {
-            String newPassword = updates.get("password");
+            String newPassword = updates.get("password").trim();
 
             // Basic validation (add more rules if needed)
             if (newPassword.length() < 12) {
@@ -125,10 +129,13 @@ public class UserController {
             }
 
             user.setPassword(passwordEncoder.encode(newPassword));
-            log.info("Password updated for user: {}", user.getEmail());
+            log.info("Password updated for user id: {}", user.getId());
         }
 
-        return ResponseEntity.ok(user);
+        // Persist the changes - without this the updates never reach the database
+        User savedUser = userRepository.save(user);
+
+        return ResponseEntity.ok(UserResponse.fromEntity(savedUser));
     }
 
     /**
@@ -137,6 +144,7 @@ public class UserController {
      * @return the authenticated User
      * @throws RuntimeException if no matching user is found
      */
+
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();

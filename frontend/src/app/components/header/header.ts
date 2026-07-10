@@ -379,84 +379,89 @@ export class Header implements OnInit, OnDestroy {
 
   /** Open the profile editing modal pre-filled with the current user data */
   handleEditProfile(): void {
-  console.log('Edit Profile clicked');
+    console.log('Edit Profile clicked');
 
-  // Récupérer les données actuelles
-  const userData = this.tokenService.getUserData();
-  this.editedUsername = userData?.username || this.ownerName;
-  this.editedEmail = userData?.email || '';
+    // Récupérer les données actuelles
+    const userData = this.tokenService.getUserData();
+    this.editedUsername = userData?.username || this.ownerName;
+    this.editedEmail = userData?.email || '';
 
-  // Fermer le dropdown user et ouvrir le modal profile
-  this.isDropdownOpenUser = false;
-  this.isEditProfileOpen = true;
+    // Fermer le dropdown user et ouvrir le modal profile
+    this.isDropdownOpenUser = false;
+    this.isEditProfileOpen = true;
 
-  this.cdr.detectChanges();
-}
+    this.cdr.detectChanges();
+  }
 
   /** Close the profile editing modal */
   handleCloseEditProfile(): void {
-  this.isEditProfileOpen = false;
-  this.cdr.detectChanges();
-}
+    this.isEditProfileOpen = false;
+    this.cdr.detectChanges();
+  }
 
   /**
    * Validate and submit the profile update form.
    * Updates TokenService in memory and emits a profileUpdated event.
    */
   async handleUpdateProfile(): Promise<void> {
-  if (!this.editedUsername?.trim()) {
-    alert('Username cannot be empty');
-    return;
+    if (!this.editedUsername?.trim()) {
+      alert('Username cannot be empty');
+      return;
+    }
+
+    if (!this.editedEmail?.trim()) {
+      alert('Email cannot be empty');
+      return;
+    }
+
+    if (this.editedPassword !== this.editedPasswordConfirm) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    try {
+      const userId = this.tokenService.getUserId();
+      const updateData = {
+        username: this.editedUsername.trim(),
+        email: this.editedEmail.trim(),
+        password: this.editedPassword.trim() ? this.editedPassword.trim() : undefined,
+      };
+
+      await lastValueFrom(
+        this.authService.patchData('user/profile', userId!, updateData)
+      );
+
+      // Mettre à jour le TokenService
+      const currentUserData = this.tokenService.getUserData();
+      this.tokenService.setUserData({
+        userId: currentUserData?.userId || userId!,
+        username: this.editedUsername.trim(),
+        email: this.editedEmail.trim(),
+        role: currentUserData?.role || 'USER'
+      });
+
+      // Mettre à jour l'affichage
+      this.ownerName = this.editedUsername.trim();
+      this.ownerInitials = this.ownerName.substring(0, 2).toUpperCase();
+
+      // Notify before clearing fields
+      this.message.messageProfileUpdated({
+        username: this.editedUsername.trim(),
+        email: this.editedEmail.trim()
+      });
+
+      //
+
+      this.editedPassword = '';
+      this.editedPasswordConfirm = '';
+
+      this.handleCloseEditProfile();
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    }
   }
-
-  if (!this.editedEmail?.trim()) {
-    alert('Email cannot be empty');
-    return;
-  }
-
-  if (this.editedPassword !== this.editedPasswordConfirm) {
-    alert('Passwords do not match');
-    return;
-  }
-
-  try {
-    const userId = this.tokenService.getUserId();
-    const updateData = {
-      username: this.editedUsername.trim(),
-      email: this.editedEmail.trim(),
-      password: this.editedPassword.trim() ? this.editedPassword.trim() : undefined,
-    };
-
-    await lastValueFrom(
-      this.authService.patchData('user/profile', userId!, updateData)
-    );
-
-    // Mettre à jour le TokenService
-    const currentUserData = this.tokenService.getUserData();
-    this.tokenService.setUserData({
-      userId: currentUserData?.userId || userId!,
-      username: this.editedUsername.trim(),
-      email: this.editedEmail.trim(),
-      role: currentUserData?.role || 'USER'
-    });
-
-   // Mettre à jour l'affichage
-    this.ownerName = this.editedUsername.trim();
-    this.ownerInitials = this.ownerName.substring(0, 2).toUpperCase();
-
-    // Notify before clearing fields
-    this.message.messageProfileUpdated({
-      username: this.editedUsername.trim(),
-      email: this.editedEmail.trim()
-    });
-
-    this.handleCloseEditProfile(); // vide editedUsername/editedEmail APRÈS
-    this.cdr.detectChanges();
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    alert('Failed to update profile');
-  }
-}
 
 }
 

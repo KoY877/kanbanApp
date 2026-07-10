@@ -98,7 +98,6 @@ export class Board {
     this.memberColors = this.members.map(() => this.generateRandomColor());
     this.addMemberDropdowns();
 
-
     // Initialize currentBoard on load
     if (this.clickedBoard?.id) {
       this.boardId = this.clickedBoard.id;
