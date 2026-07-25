@@ -15,7 +15,7 @@
             "name": "KanbanApplication",
             "request": "launch",
             "mainClass": "com.kanban.kanbanapp.KanbanAppApplication",
-            "projectName": "todoapp",
+            "projectName": "kanbanApp",
             "env": {
                 "DB_USERNAME": "${env:DB_USERNAME}",
                 "DB_PASSWORD": "${env:DB_PASSWORD}",

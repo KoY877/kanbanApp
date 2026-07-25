@@ -5,11 +5,16 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.kanban.kanbanapp.Data_Transfer_Object.TaskCreateRequest;
 import com.kanban.kanbanapp.Model.Task;
+import com.kanban.kanbanapp.Model.User;
+import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.TaskService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +37,20 @@ import lombok.RequiredArgsConstructor;
 public class TaskController {
 
     private final TaskService taskService;
+    private final UserRepository userRepository;
+
+    /**
+     * Resolve the currently authenticated user from the security context.
+     *
+     * @return the authenticated User
+     * @throws RuntimeException if no matching user is found
+     */
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 
     /**
      * Create a new task and assign it to a specific column. The columnId must be provided in the request body, and the task will be created with a taskOrder based on the current tasks in the column.
@@ -62,6 +81,7 @@ public class TaskController {
             description = "Column not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<Task> createTask(
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -71,7 +91,8 @@ public class TaskController {
         )
         @Valid @RequestBody @NonNull TaskCreateRequest request
     ) {
-        Task savedTask = taskService.createTask(request);
+        User user = getAuthenticatedUser();
+        Task savedTask = taskService.createTask(request, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
@@ -99,12 +120,14 @@ public class TaskController {
             description = "Task not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(
         @Parameter(description = "Task ID", example = "task-123", required = true)
         @PathVariable @NonNull String id
     ) {
-        return ResponseEntity.ok(taskService.getTaskById(id));
+        User user = getAuthenticatedUser();
+        return ResponseEntity.ok(taskService.getTaskById(id, user.getId()));
     }
 
     /**
@@ -130,12 +153,14 @@ public class TaskController {
             description = "Column not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/column/{columnId}")
     public ResponseEntity<List<Task>> getTasksByColumn(
         @Parameter(description = "Column ID", example = "col-123", required = true)
         @PathVariable @NonNull String columnId
     ) {
-        return ResponseEntity.ok(taskService.getTasksByColumn(columnId));
+        User user = getAuthenticatedUser();
+        return ResponseEntity.ok(taskService.getTasksByColumn(columnId, user.getId()));
     }
 
     /**
@@ -169,6 +194,7 @@ public class TaskController {
             description = "Task not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(
         @Parameter(description = "Task ID", example = "task-123", required = true)
@@ -179,7 +205,8 @@ public class TaskController {
         )
         @Valid @RequestBody @NonNull TaskCreateRequest request
     ) {
-        return ResponseEntity.ok(taskService.updateTask(id, request));
+        User user = getAuthenticatedUser();
+        return ResponseEntity.ok(taskService.updateTask(id, request, user.getId()));
     }
 
     /**
@@ -205,12 +232,14 @@ public class TaskController {
             description = "Task not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(
         @Parameter(description = "Task ID", example = "task-123", required = true)
         @PathVariable @NonNull String id
     ) {
-        taskService.deleteTask(id);
+        User user = getAuthenticatedUser();
+        taskService.deleteTask(id, user.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -243,6 +272,7 @@ public class TaskController {
             description = "Task not found"
         )
     })
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/{id}")
     public ResponseEntity<Task> patchTask(
         @Parameter(description = "Task ID", example = "task-123", required = true)
@@ -253,6 +283,7 @@ public class TaskController {
         )
         @Valid @RequestBody @NonNull TaskCreateRequest request
     ) {
-        return ResponseEntity.ok(taskService.updateTask(id, request));
+        User user = getAuthenticatedUser();
+        return ResponseEntity.ok(taskService.updateTask(id, request, user.getId()));
     }
 }

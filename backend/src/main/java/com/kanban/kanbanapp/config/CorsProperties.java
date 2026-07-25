@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class CorsProperties {
     
-    private String allowedOrigins = "http://localhost:4200,http://localhost:8081";
+    private String allowedOrigins = "http://localhost:4202,http://localhost:8084";
     private String allowedMethods = "GET,POST,PUT,DELETE,PATCH,OPTIONS";
     private String allowedHeaders = "*";
     private Boolean allowCredentials = true;

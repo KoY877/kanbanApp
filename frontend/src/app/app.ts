@@ -11,7 +11,7 @@ import { Message } from './services/message';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('TodoApp_Angular');
+  protected readonly title = signal('KanbanApp_Angular');
   isCloseAllDropdown = false;
 
    

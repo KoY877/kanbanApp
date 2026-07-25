@@ -13,21 +13,16 @@
 - createUser DTO must NOT contain a role field
 
 ## Naming Conventions
-- Table names lowercase: "users", "tickets", "comments"
-- Java fields camelCase: assignedTo, createdBy (never assigned_to)
-- Request DTOs: UserCreateRequest, UserUpdateRequest, TicketCreateRequest
-- Response DTOs: UserResponse, TicketResponse
+- Table names lowercase: "users", "boards", "tasks"
+- Java fields camelCase: taskOrder, columnId (never task_order)
+- Request DTOs: UserCreateRequest, BoardCreateRequest, TaskCreateRequest, KanbanColumnCreateRequest
+- Response DTOs: UserResponse, TaskResponse, BoardResponse
 
 ## Exception Handling
 - Always throw specific exceptions: ResourceNotFoundException, 
-  EmailAlreadyExistsException, InvalidTransitionException
+  EmailAlreadyExistsException, WipLimitExceededException
 - Never catch an exception with an empty block
 - GlobalExceptionHandler handles all exceptions via @RestControllerAdvice
-
-## State Machine
-- Status transitions validated only in TicketStatus enum via canTransitionTo()
-- Status never set directly from TicketCreateRequest or TicketUpdateRequest
-- Status change only via PATCH /tickets/{id}/status
 
 ## Testing Rules
 - Every Service method must have a JUnit 5 test

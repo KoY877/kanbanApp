@@ -18,7 +18,7 @@ services:
 
   backend:
     build: ./backend
-    container_name: todoApp_backend
+    container_name: KanbanApp_backend
     ports:
       - "8084:8084"
     environment:
@@ -39,9 +39,9 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: todoApp_frontend
+    container_name: KanbanApp_frontend
     ports:
-      - "4202:80"
+      - "4200:80"
     depends_on:
       - backend
     develop:

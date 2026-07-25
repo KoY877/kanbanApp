@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,17 +33,19 @@ public class TaskService {
      * column's task order.
      *
      * @param request task creation payload (name, description, columnId, members...)
+     * @param userId  the id of the authenticated user; must own the target column's board
      * @return the created and persisted task
      * @throws RuntimeException          if the target column is not found, or if a
      *                                   member id is invalid or does not belong to the
      *                                   column's board
+     * @throws AccessDeniedException     if the target column's board is not owned by userId
      * @throws WipLimitExceededException if the column is already at its WIP limit
      */
     @Transactional
-    public Task createTask(@NonNull TaskCreateRequest request) {
+    public Task createTask(@NonNull TaskCreateRequest request, @NonNull String userId) {
         String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
-        KanbanColumn column = kanbanColumnRepository.findById(columnId)
-            .orElseThrow(() -> new RuntimeException("Column not found"));
+        KanbanColumn column = kanbanColumnRepository.findByIdAndBoard_User_Id(columnId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Column not found"));
 
         Board board = column.getBoard();
 
@@ -85,11 +88,15 @@ public class TaskService {
      * Retrieve all tasks of a column, ordered by their position (taskOrder).
      *
      * @param columnId the column id
+     * @param userId   the id of the authenticated user; must own the column's board
      * @return the ordered list of tasks in the column
+     * @throws AccessDeniedException if the column is not found or not owned by userId
      */
     @Transactional(readOnly = true)
-    public List<Task> getTasksByColumn(@NonNull String columnId) {
+    public List<Task> getTasksByColumn(@NonNull String columnId, @NonNull String userId) {
         String validColumnId = java.util.Objects.requireNonNull(columnId, "Column ID cannot be null");
+        kanbanColumnRepository.findByIdAndBoard_User_Id(validColumnId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Column not found"));
         return taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(validColumnId);
     }
 
@@ -97,27 +104,31 @@ public class TaskService {
      * Retrieve a single task by its id.
      *
      * @param taskId the task id
+     * @param userId the id of the authenticated user; must own the task's board
      * @return the matching task
-     * @throws RuntimeException if no task exists with the given id
+     * @throws AccessDeniedException if no task exists with the given id, or it is
+     *                               not owned by userId
      */
     @Transactional(readOnly = true)
-    public Task getTaskById(@NonNull String taskId) {
+    public Task getTaskById(@NonNull String taskId, @NonNull String userId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
-        return taskRepository.findById(validTaskId)
-            .orElseThrow(() -> new RuntimeException("Task not found"));
+        return taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Task not found"));
     }
 
     /**
      * Delete a task by its id and reorder the remaining tasks in its column.
      *
      * @param taskId the task id
-     * @throws RuntimeException if no task exists with the given id
+     * @param userId the id of the authenticated user; must own the task's board
+     * @throws AccessDeniedException if no task exists with the given id, or it is
+     *                               not owned by userId
      */
     @Transactional
-    public void deleteTask(@NonNull String taskId) {
+    public void deleteTask(@NonNull String taskId, @NonNull String userId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
-        Task task = taskRepository.findById(validTaskId)
-            .orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Task not found"));
 
         String columnId = task.getColumn().getId();
 
@@ -132,22 +143,25 @@ public class TaskService {
      *
      * @param taskId  the task id
      * @param request the new task data
+     * @param userId  the id of the authenticated user; must own both the task's
+     *                current board and the target column's board
      * @return the updated task
-     * @throws RuntimeException          if the task or target column is not found, or
-     *                                   if a member id is invalid or does not belong
+     * @throws AccessDeniedException     if the task or target column is not found, or
+     *                                   either is not owned by userId
+     * @throws RuntimeException          if a member id is invalid or does not belong
      *                                   to the target column's board
      * @throws WipLimitExceededException if moving the task into a different
      *                                   column would exceed that column's WIP limit
      */
     @Transactional
-    public Task updateTask(@NonNull String taskId, @NonNull TaskCreateRequest request) {
+    public Task updateTask(@NonNull String taskId, @NonNull TaskCreateRequest request, @NonNull String userId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
-        Task task = taskRepository.findById(validTaskId)
-            .orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Task not found"));
 
         String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
-        KanbanColumn targetColumn = kanbanColumnRepository.findById(columnId)
-            .orElseThrow(() -> new RuntimeException("Column not found"));
+        KanbanColumn targetColumn = kanbanColumnRepository.findByIdAndBoard_User_Id(columnId, userId)
+            .orElseThrow(() -> new AccessDeniedException("Column not found"));
 
         Board board = targetColumn.getBoard();
         List<Member> assignedMembers = resolveMembers(request.getMembers(), board);
