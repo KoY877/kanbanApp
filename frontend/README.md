@@ -1,7 +1,7 @@
 # TodoApp Angular — Kanban Frontend
 
 Angular 21 frontend for a fullstack Kanban board application.
-Connects to a Spring Boot backend running on `http://localhost:8081`.
+Connects to a Spring Boot backend running on `http://localhost:8084`.
 
 ---
 
@@ -39,7 +39,7 @@ Navigate to `http://localhost:4200/`. The app will reload automatically on file 
 
 ### Backend connection
 
-The app expects the Spring Boot API at `http://localhost:8081`.
+The app expects the Spring Boot API at `http://localhost:8084`.
 To change the URL, edit the environment files:
 
 * `src/app/environements/environement.dev.ts` — development

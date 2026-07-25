@@ -158,7 +158,7 @@ docker-compose up -d
 ```
 
 API available at:
-`http://localhost:8081/`
+`http://localhost:8084/`
 
 ---
 
