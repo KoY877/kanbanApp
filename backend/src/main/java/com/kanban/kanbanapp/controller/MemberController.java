@@ -36,7 +36,7 @@ public class MemberController {
      *
      * @return 200 with the list of members
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get all members", description = "Retrieve a list of all members")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Iterable<Member>> getAll() {
@@ -52,7 +52,7 @@ public class MemberController {
      * @param id the member UUID
      * @return 200 with the member, or 404 if not found
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get member by ID", description = "Retrieve a single member by its ID")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @GetMapping("/{id}")
@@ -71,7 +71,7 @@ public class MemberController {
      * @return 201 with the created member, 400 if email is blank, or 404 if the
      *         board does not exist
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Create a new member", description = "Create a new member with specified details")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Member> create(@RequestBody @NonNull MemberCreateRequest request) {
@@ -121,7 +121,7 @@ public class MemberController {
      * @param id the member UUID
      * @return 204 on success, or 404 if not found
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @Operation(summary = "Delete a member", description = "Delete a member by its ID")
     @DeleteMapping("/{id}")
@@ -196,38 +196,8 @@ public class MemberController {
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Member> patch(@PathVariable(value = "id") String id,
-            @RequestBody Map<String, Object> updates) {
-
-        // Optional<Member> memberInDb = memberRepository.findById(id);
-
-        // if (memberInDb.isPresent()) {
-        // Member memberToPatch = memberInDb.get();
-
-        // if (updates.containsKey("memberEmail")) {
-        // memberToPatch.setMemberEmail((String) updates.get("memberEmail"));
-        // }
-        // if (updates.containsKey("role")) {
-        // memberToPatch.setRole((String) updates.get("role"));
-        // }
-
-        // if (updates.containsKey("boardId")) {
-        // String boardId = (String) updates.get("boardId");
-        // if (boardId != null && !boardId.isEmpty()) {
-        // Optional<Board> board = boardRepository.findById(boardId);
-        // if (board.isEmpty()) {
-        // return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        // }
-        // memberToPatch.setBoard(board.get());
-        // } else {
-        // memberToPatch.setBoard(null);
-        // }
-        // }
-
-        // // Note: 'secret' is not updatable for security reasons
-
-        // Member patchedMember = memberRepository.save(memberToPatch);
-        // return ResponseEntity.status(HttpStatus.OK).body(patchedMember);
-        // }
+        @RequestBody Map<String, Object> updates) 
+        {
 
         return ResponseEntity.notFound().build();
     }

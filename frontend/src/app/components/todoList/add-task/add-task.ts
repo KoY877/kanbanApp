@@ -349,8 +349,6 @@ if (event === 'member') {
       this.selectedLabels = []
     }
 
-    console.log("Add HandleSelectedLabel: ", this.selectedLabels);
-
     return this.selectedLabels
   }
 
@@ -400,41 +398,41 @@ if (event === 'member') {
    * edited or create a new one.
    */
   handleSubmitAddTask() {
-  if (this.form.get('name')?.invalid) return;
+    if (this.form.get('name')?.invalid) return;
 
-  const taskData = {
-    name: this.form.get('name')?.value,
-    description: this.form.get('description')?.value || null,
-    members: this.selectedMembers.map((m: any) => m?.id || m),
-    labels: this.selectedLabels.map((l: any) => l.label),
-    colors: this.selectedItem?.colorChoice ? [this.selectedItem.colorChoice] : [],
-    time: this.time ? `${String(this.time).padStart(2, '0')}:00:00` : null,
-    columnId: this.columnId,
-  };
+    const taskData = {
+      name: this.form.get('name')?.value,
+      description: this.form.get('description')?.value || null,
+      members: this.selectedMembers.map((m: any) => m?.id || m),
+      labels: this.selectedLabels.map((l: any) => l.label),
+      colors: this.selectedItem?.colorChoice ? [this.selectedItem.colorChoice] : [],
+      time: this.time ? `${String(this.time).padStart(2, '0')}:00:00` : null,
+      columnId: this.columnId,
+    };
 
-  if (this.isEditTask && this.taskToEdit) {
-    // Edit mode
-    this.entityService.updateData('tasks', { ...taskData, id: this.taskToEdit.id })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (task) => {
-          this.taskUpdated.emit(task);
-          this.form.reset();
-        },
-        error: (err) => console.error('Error updating task:', err),
-      });
-  } else {
-    // Creation mode
-    this.entityService.addData<any>('tasks', taskData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (task) => {
-          this.taskCreated.emit(task);
-          this.form.reset();
-        },
-        error: (err) => console.error('Error creating task:', err),
-      });
+    if (this.isEditTask && this.taskToEdit) {
+      // Edit mode
+      this.entityService.updateData('tasks', { ...taskData, id: this.taskToEdit.id })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (task) => {
+            this.taskUpdated.emit(task);
+            this.form.reset();
+          },
+          error: (err) => console.error('Error updating task:', err),
+        });
+    } else {
+      // Creation mode
+      this.entityService.addData<any>('tasks', taskData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (task) => {
+            this.taskCreated.emit(task);
+            this.form.reset();
+          },
+          error: (err) => console.error('Error creating task:', err),
+        });
+    }
   }
-}
 
 }

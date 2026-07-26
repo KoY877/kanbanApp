@@ -124,10 +124,8 @@ export class Container implements OnInit {
     const isAuth = this.tokenService.isAuthenticated();
 
     if (isAuth) {
-      console.log('Container: authenticated user detected');
       // Le messageConnected(true) a déjà été appelé par l'initializer
     } else {
-      console.log('Container: no authentication - showing login');
       this.showSignIn();
     }
 

@@ -132,8 +132,6 @@ export class SearchMember {
   onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       if (this.dropdownSearchValue === false) {
-        console.log(this.dropdownSearchValue);
-
         this.clickOutside.emit(this.dropdownSearchValue = false);
 
       } else{
@@ -164,18 +162,11 @@ export class SearchMember {
   private initializeOwnerInfo(): void {
     const currentUserId = localStorage.getItem('User-Id');
 
-
-      console.log(currentUserId);
-
-      console.log(this.userId);
     if (this.userId === currentUserId) {
       this.ownerName = localStorage.getItem('UserName') ||
                        localStorage.getItem('UserEmail') ||
                        'Owner';
       this.ownerInitials = this.ownerName.substring(0, 2).toUpperCase();
-
-      console.log(this.ownerInitials);
-
     }
   }
 

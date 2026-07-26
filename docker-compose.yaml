@@ -1,3 +1,5 @@
+name: kanbanapp
+
 services:
   mariadb:
     image: mariadb:latest
@@ -54,3 +56,5 @@ services:
 
 volumes:
   mariadb_data:
+    external: true
+    name: todoapp_mariadb_data

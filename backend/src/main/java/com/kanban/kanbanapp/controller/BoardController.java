@@ -9,6 +9,7 @@ import com.kanban.kanbanapp.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/boards")
 @RequiredArgsConstructor
+@Slf4j
 public class BoardController {
 
     private final BoardRepository boardRepository;
@@ -42,7 +44,6 @@ public class BoardController {
         }
 
         String email = authentication.getName();
-        System.out.println("DEBUG - Attempting to find user with email: " + email);
 
         if (email == null || email.equals("anonymousUser")) {
             throw new RuntimeException("No valid user principal found");
@@ -50,8 +51,8 @@ public class BoardController {
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    System.err.println("ERROR - User not found in database with email: " + email);
-                    return new RuntimeException("User not found with email: " + email);
+                    log.error("Authenticated principal not found in database");
+                    return new RuntimeException("User not found");
                 });
     }
 
@@ -64,22 +65,14 @@ public class BoardController {
      */
     @GetMapping("/all")
     public ResponseEntity<List<Board>> getUserBoards() {
-        try {
-            System.out.println("DEBUG - GET /boards/all called");
-            User user = getAuthenticatedUser();
-            System.out.println("DEBUG - User found: " + user.getEmail() + " (ID: " + user.getId() + ")");
+        User user = getAuthenticatedUser();
 
-            // Use the corrected repository method that navigates through the User
-            // relationship
-            List<Board> boards = boardRepository.findAllByUser_Id(user.getId());
-            System.out.println("DEBUG - Found " + boards.size() + " boards for user");
+        // Use the corrected repository method that navigates through the User
+        // relationship
+        List<Board> boards = boardRepository.findAllByUser_Id(user.getId());
+        log.debug("Found {} boards for user id: {}", boards.size(), user.getId());
 
-            return ResponseEntity.ok(boards);
-        } catch (Exception e) {
-            System.err.println("ERROR in getUserBoards: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        return ResponseEntity.ok(boards);
     }
 
     @PreAuthorize("isAuthenticated()")

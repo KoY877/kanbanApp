@@ -13,9 +13,10 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration; 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -48,13 +49,13 @@ public class UserServiceImpl implements UserService {
             if (user.getLockTime() != null && 
                 Duration.between(user.getLockTime(), Instant.now()).toMinutes() >= 30) {
                 
-                log.info("Auto-unlocking account for user: {}", email);
+                log.info("Auto-unlocking account for user id: {}", user.getId());
                 user.setAccountLocked(false);
                 user.setFailedLoginAttempts(0);
                 user.setLockTime(null);
                 userRepository.save(user);
             } else {
-                log.warn("Login attempt for locked account: {}", email);
+                log.warn("Login attempt for locked account, user id: {}", user.getId());
                 throw new LockedException("Account is locked due to multiple failed login attempts. Please try again later.");
             }
         }
@@ -65,13 +66,13 @@ public class UserServiceImpl implements UserService {
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             user.setLastFailedLogin(Instant.now());
             
-            log.warn("Failed login attempt #{} for user: {}", user.getFailedLoginAttempts(), email);
-            
+            log.warn("Failed login attempt #{} for user id: {}", user.getFailedLoginAttempts(), user.getId());
+
             // Lock after 5 failures
             if (user.getFailedLoginAttempts() >= 5) {
                 user.setAccountLocked(true);
                 user.setLockTime(Instant.now());
-                log.error("Account locked for user: {} after 5 failed attempts", email);
+                log.error("Account locked for user id: {} after 5 failed attempts", user.getId());
                                 
             }
             
@@ -81,7 +82,7 @@ public class UserServiceImpl implements UserService {
         
         // Success - reset counter
         if (user.getFailedLoginAttempts() > 0) {
-            log.info("Successful login for user: {} - resetting failed attempts counter", email);
+            log.info("Successful login for user id: {} - resetting failed attempts counter", user.getId());
             user.setFailedLoginAttempts(0);
             user.setLastFailedLogin(null);
             userRepository.save(user);
@@ -116,11 +117,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User registerUser(RegisterRequest request) {
-        log.info("Registering new user with email: {}", request.getEmail());
-
         // Check if user already exists
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            log.error("User already exists with email: {}", request.getEmail());
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            log.error("Registration rejected - user already exists with id: {}", existingUser.get().getId());
             throw new UserAlreadyExistsException(request.getEmail());
         }
 

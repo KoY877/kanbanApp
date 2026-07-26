@@ -150,7 +150,6 @@ function startRefresh(
       tokenService.setAccessToken(newToken);
       refreshTokenSubject.next(newToken); // Unblocks queued requests
 
-      console.log('Token refreshed. New session active.');
       // Errors from the retried request (e.g. 500) propagate normally
       return next(cloneWithToken(req, newToken, true));
     }),

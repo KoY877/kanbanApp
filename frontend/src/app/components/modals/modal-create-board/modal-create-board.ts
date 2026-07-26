@@ -568,14 +568,11 @@ export class ModalCreateBoard {
         // No userId - extracted from JWT on the backend side
       };
 
-      console.log('Creating board:', boardData);
-
       // 1. Create the board
       const response: any = await lastValueFrom(
         this.entityService.addData('boards', boardData)
       );
 
-      console.log('Board created successfully:', response);
       this.responsData = response;
 
       const boardId: string = response.id;

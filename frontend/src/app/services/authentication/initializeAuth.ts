@@ -14,24 +14,13 @@ export const initializeAuth = () => {
   const authService = inject(AuthService);
   const messageService = inject(Message);
 
-  console.log('Initializing authentication...');
-
   return lastValueFrom(authService.restoreSession()).then(
     (restored) => {
-      console.log('initializeAuth - messageConnected emitted:', restored);
       messageService.messageConnected(restored);
-
-      if (restored) {
-        console.log('Session restored automatically');
-      } else {
-        console.log('No session restored');
-      }
-
       return restored;
     },
     (error) => {
       console.error('Error during initialization:', error);
-      console.log('initializeAuth - messageConnected emitted: false (error)');
       messageService.messageConnected(false);
       return false;
     }

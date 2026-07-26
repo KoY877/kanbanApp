@@ -47,8 +47,6 @@ export class ChangeRole {
     this.member = this.selectedMember[0].memberEmail
     this.role = this.selectedMember[0].role;
 
-    console.log(this.selectedMember[0].role);
-
     this.form = this.formBuilder.group({
       chooseRole: [this.role || 'Standard']
     });
@@ -80,10 +78,10 @@ export class ChangeRole {
     this.form.get('chooseRole')?.setValue(value);
 
     // Update the role property with the selected value
-    this.role = value; 
+    this.role = value;
 
     // Trigger change detection to update the view
-    this.cdr.detectChanges();    
+    this.cdr.detectChanges();
   }
 
   /**
@@ -94,7 +92,7 @@ export class ChangeRole {
   async handleChangeRole(event: any, id: string | undefined){
 
     event?.preventDefault()
-    
+
     // Get role value from form
     const role = this.form?.value?.chooseRole
 

@@ -73,8 +73,6 @@ export class SignIn {
         // Backend returns AuthResponse with JWT tokens
         const authData = response as unknown as AuthResponse; // Already parsed by HttpClient
 
-        console.log(authData);
-
         // SECURITY: Store ONLY the accessToken in MEMORY
         this.tokenService.setAccessToken(authData.accessToken);
 
@@ -88,16 +86,6 @@ export class SignIn {
 
         localStorage.setItem('connected', 'true');
         localStorage.setItem('isAuthenticated', 'true');
-
-        console.log('Login successful - Tokens secured');
-        console.log('AccessToken stored in memory');
-        console.log('RefreshToken stored in httpOnly cookie (not accessible in JS)');
-        console.log('User data:', {
-          userId: authData.userId,
-          username: authData.username,
-          email: authData.email,
-          connected: localStorage.getItem('connected')
-        });
 
         // Emit events to update application state
         this.message.messageConnected(true);
@@ -119,7 +107,6 @@ export class SignIn {
         this.errorMessage = 'Impossible de joindre le serveur. Veuillez réessayer.';
       } else {
         this.errorMessage = 'Une erreur inattendue s\'est produite.';
-        console.error('Erreur de connexion:', error);
       }
       this.cdr.detectChanges();
     }

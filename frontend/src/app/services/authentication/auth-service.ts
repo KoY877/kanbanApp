@@ -40,17 +40,12 @@ export class AuthService {
 
     // If both already exist, session is already active
     if (hasToken && hasUserId) {
-      console.log('Session already active (token + userId in memory)');
       return of(true);
     }
 
     // Try to refresh regardless - the httpOnly cookie may exist even if localStorage is empty
-    console.log('Attempting session restore via refresh token (httpOnly cookie)...');
-
     return this.refreshAccessToken().pipe(
       tap(response => {
-        console.log('Refresh successful - restoring user data');
-
         // Save the accessToken and user data
         this.tokenService.setAccessToken(response.accessToken);
 
@@ -93,9 +88,6 @@ export class AuthService {
     // The refreshToken is now in an httpOnly cookie
     // It will be sent automatically by the browser with withCredentials: true
 
-    console.log('Calling /auth/refresh endpoint...');
-    console.log('The refreshToken will be sent automatically via httpOnly cookie');
-
     return this.http.post<{
       accessToken: string;
       refreshToken: string | null;
@@ -110,14 +102,6 @@ export class AuthService {
       { withCredentials: true }  // Send httpOnly cookies
     ).pipe(
       map(response => {
-        console.log('200 OK response from refresh received');
-        console.log('Refresh response:', {
-          hasAccessToken: !!response.accessToken,
-          accessTokenPreview: response.accessToken?.substring(0, 20) + '...',
-          userId: response.userId,
-          username: response.username
-        });
-
         // Note: Tokens are saved by the interceptor
         return response;
       }),

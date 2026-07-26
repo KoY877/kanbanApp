@@ -1,6 +1,5 @@
 package com.kanban.kanbanapp.Data_Transfer_Object;
 
-import com.kanban.kanbanapp.Model.enums.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -43,11 +42,4 @@ public class RegisterRequest {
     @NotBlank(message = "Le mot de passe est requis")
     @Size(min = 12, message = "Le mot de passe doit contenir au moins 12 caractères")
     private String password;
-
-    @Schema(
-        description = "User role (default: ADMINISTRATOR)",
-        example = "ADMINISTRATOR",
-        defaultValue = "ADMINISTRATOR"
-    )
-    private Role role = Role.ADMINISTRATOR;
 }

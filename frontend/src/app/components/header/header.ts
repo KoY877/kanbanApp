@@ -105,8 +105,6 @@ export class Header implements OnInit, OnDestroy {
       this.ownerName = username || email || 'Owner';
       this.ownerInitials = this.ownerName.substring(0, 2).toUpperCase();
 
-      console.log('Owner info initialized:', { ownerName: this.ownerName, ownerInitials: this.ownerInitials, isConnected: this.isConnected });
-
       this.isCloseAllDropdown = false;
       this.allDropdownClosed.emit();
       this.cdr.detectChanges();
@@ -129,8 +127,6 @@ export class Header implements OnInit, OnDestroy {
 
     // Emit message to open the modal in the Container
     this.message.messageBooleanOpenModal(true);
-
-    console.log('Header: messageBooleanOpenModal(true) emitted');
   }
 
   /**
@@ -156,11 +152,8 @@ export class Header implements OnInit, OnDestroy {
       // S'assurer que c'est un tableau
       this.boards = Array.isArray(boardsData) ? boardsData : [boardsData];
 
-      console.log('Boards loaded:', this.boards);
-
       // Si aucun board n'existe, créer un board par défaut
       if (this.boards.length === 0) {
-        console.log('No boards found - creating default board...');
         await this.createDefaultBoard();
         return; // createDefaultBoard va recharger les boards
       }
@@ -172,13 +165,11 @@ export class Header implements OnInit, OnDestroy {
       if (savedBoardId) {
         // Chercher le board sauvegardé
         boardToLoad = this.boards.find(b => b.id === savedBoardId);
-        console.log('Saved board found:', boardToLoad?.name);
       }
 
       // Si pas de board sauvegardé ou board introuvable, utiliser le premier
       if (!boardToLoad) {
         boardToLoad = this.boards[defaultIndex];
-        console.log('Loading first board:', boardToLoad?.name);
       }
 
       if (boardToLoad) {
@@ -220,8 +211,6 @@ export class Header implements OnInit, OnDestroy {
         this.authService.getDataById("boards", boardId)
       );
 
-      console.log(clickedBoardArray);
-
       const clickedBoard = Array.isArray(clickedBoardArray)
         ? clickedBoardArray[0]
         : clickedBoardArray;
@@ -233,7 +222,6 @@ export class Header implements OnInit, OnDestroy {
         // Save the selected board in localStorage
         const board = clickedBoard as Board;
         localStorage.setItem('lastViewedBoardId', board.id!);
-        console.log('Board saved:', board.name || board.id);
       }
     } catch (error) {
       console.error('Error loading board:', error);
@@ -278,8 +266,6 @@ export class Header implements OnInit, OnDestroy {
    */
   private async createDefaultBoard(): Promise<void> {
     try {
-      console.log('Creating default board...');
-
       // 1. Créer le board
       const boardData = {
         name: 'Board',
@@ -289,8 +275,6 @@ export class Header implements OnInit, OnDestroy {
       const createdBoard: any = await lastValueFrom(
         this.entityService.addData('boards', boardData)
       );
-
-      console.log('Default board created:', createdBoard);
 
       const boardId = createdBoard.id;
 
@@ -313,8 +297,6 @@ export class Header implements OnInit, OnDestroy {
         );
       }
 
-      console.log('Default columns created');
-
       // 3. Recharger les boards pour afficher le board créé
       await this.loadBoards();
 
@@ -331,25 +313,15 @@ export class Header implements OnInit, OnDestroy {
    * to prevent the BehaviorSubject initial false value from disconnecting the header.
    */
   private setupSubscriptions(): void {
-    console.log('Header setupSubscriptions - initial state:', { isConnected: this.isConnected });
-
     this.message.connected$
       .pipe(takeUntil(this.destroy$))
       .subscribe(isConnected => {
         const wasDisconnected = !this.isConnected;
 
-        console.log('Header received connected$:', {
-          isConnected,
-          wasDisconnected,
-          currentIsConnected: this.isConnected,
-          willLoadBoards: isConnected && wasDisconnected
-        });
-
         this.isConnected = isConnected;
 
         // If the user just connected, load boards
         if (isConnected && wasDisconnected) {
-          console.log('User connected - loading boards...');
           this.loadBoards();
           this.initializeOwnerInfo();
         }
@@ -361,7 +333,6 @@ export class Header implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((msg: boolean) => {
         if (msg !== true) return;
-        console.log('Header received disconnect$');
         this.isConnected = false;
         this.boards = [];
         this.ownerName = '';
@@ -379,8 +350,6 @@ export class Header implements OnInit, OnDestroy {
 
   /** Open the profile editing modal pre-filled with the current user data */
   handleEditProfile(): void {
-    console.log('Edit Profile clicked');
-
     // Récupérer les données actuelles
     const userData = this.tokenService.getUserData();
     this.editedUsername = userData?.username || this.ownerName;

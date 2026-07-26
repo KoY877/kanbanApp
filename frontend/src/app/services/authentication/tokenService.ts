@@ -35,7 +35,6 @@ export class TokenService {
   constructor() {
     // On startup, the in-memory token is always null after a page refresh
     // (requires re-login or a token refresh via the httpOnly cookie)
-    console.log('TokenService initialized - Tokens in memory only');
   }
 
   /**
@@ -44,7 +43,6 @@ export class TokenService {
   setAccessToken(token: string): void {
     this.accessToken = token;
     this.isAuthenticatedSubject.next(true);
-    console.log('Access token stored in memory');
   }
 
   /**
@@ -60,7 +58,6 @@ export class TokenService {
   clearAccessToken(): void {
     this.accessToken = null;
     this.isAuthenticatedSubject.next(false);
-    console.log('Access token cleared from memory');
   }
 
   /**
@@ -111,8 +108,6 @@ export class TokenService {
     localStorage.removeItem('Role');
     localStorage.removeItem('connected');
     localStorage.removeItem('isAuthenticated');
-
-    console.log('All tokens and user data cleared');
   }
 
   /**
@@ -138,10 +133,8 @@ export class TokenService {
       );
 
       this.setAccessToken(response.accessToken);
-      console.log('Session restored automatically after reload');
       return true;
     } catch (error) {
-      console.log('Cannot restore session - refresh token expired');
       this.clearAll();
       return false;
     }

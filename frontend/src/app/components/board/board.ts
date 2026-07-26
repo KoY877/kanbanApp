@@ -102,8 +102,6 @@ export class Board {
     if (this.clickedBoard?.id) {
       this.boardId = this.clickedBoard.id;
       this.loadBoardMembers(this.boardId);
-      console.log(this.boardId);
-
     }
 
     // Subscribe to MessageService observables
@@ -137,7 +135,6 @@ export class Board {
     if (changes['clickedBoard']?.currentValue) {
       this.initializeDropdowns();
       this.memberEmails = this.clickedBoard?.members;
-      console.log('memberEmails set to:', this.memberEmails);  // log for debug
 
       if (this.clickedBoard?.id) {
         this.boardId = this.clickedBoard.id;
@@ -292,7 +289,6 @@ export class Board {
       this.handleCloseEditBoardName();
       this.cdr.detectChanges();
     } catch (error) {
-      console.error('Error updating board name:', error);
       alert('Failed to update board name');
     }
   }
@@ -384,17 +380,12 @@ export class Board {
    */
   private async loadBoardMembers(id: string): Promise<void> {
     try {
-      console.log('Loading board data for ID:', id);
       this.currentBoard = await lastValueFrom(
         this.entityService.getDataById<BoardModel>('boards', id)
       );
 
-      console.log('Board data received:', this.currentBoard);
-
       if (this.currentBoard?.[0]) {
         const board = this.currentBoard[0];
-        console.log('Board columns count:', board.columns?.length || 0);
-        console.log('Board members count:', board.members?.length || 0);
 
         setTimeout(() => {
           this.members = board.members;
@@ -409,7 +400,6 @@ export class Board {
       // Trigger change detection to update the view with new member data
       this.cdr.detectChanges();
     } catch (error) {
-      console.error('Error loading board:', error);
       this.members = [];
       this.numberOfMember = 1;
     }
@@ -502,7 +492,6 @@ export class Board {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error deleting board:', error);
         this.isConfirmDelete = false;
         this.cdr.detectChanges();
       }

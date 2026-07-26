@@ -127,7 +127,7 @@ public class KanbanColumnController {
      * @param id the column UUID
      * @return 204 on success, or 404 if not found/unauthorized
      */
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the column to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "column-id-123")))
     @Operation(summary = "Delete a column", description = "Delete a column by its ID")
     @DeleteMapping("/{id}")
@@ -182,7 +182,6 @@ public class KanbanColumnController {
         }
 
         return ResponseEntity.notFound().build();
-
     }
 
     /**

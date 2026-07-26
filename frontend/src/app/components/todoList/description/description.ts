@@ -48,10 +48,8 @@ export class Description {
    */
   format(command: string) {
     this.selectedText = this.getSelectedText();
-    console.log('Formatting:', this.selectedText);
 
     if (!this.selectedText) {
-      console.log('No text selected');
       return;
     }
 
@@ -64,10 +62,9 @@ export class Description {
         break;
       case 'italic':
         formattedText = `__${this.selectedText}__`;
-
         break;
+
       default:
-        console.log('Unknown formatting command');
         return;
 
     }
@@ -79,7 +76,6 @@ export class Description {
     const content = this.textArea.nativeElement.textContent;
     this.description.setValue(content, { emitEvent: true });
 
-    console.log('Formatted text:', formattedText);
   }
 
   /**
@@ -118,13 +114,11 @@ export class Description {
   showContent(): void {
 
     const content = this.textArea.nativeElement.textContent;
-    console.log('Text area content:', content);
 
     // Turn **bold** and __italic__ markers into HTML tags
     const formattedContent = content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // bold
       .replace(/__(.*?)__/g, '<em>$1</em>'); // italic
-    console.log('Formatted content:', formattedContent);
 
     document.execCommand(formattedContent, false, '');
 
@@ -187,8 +181,6 @@ export class Description {
 
     this.description.setValue(content, { emitEvent: true });
     this.descriptionChange.emit(content);
-
-    console.log(this.description.value);
 
   }
 }

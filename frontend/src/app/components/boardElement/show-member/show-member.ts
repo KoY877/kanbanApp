@@ -92,8 +92,6 @@ export class ShowMember {
         this.memberService.getMemberData<Members>('board/member')
       );
 
-      console.log(allMembers);
-
       if (!allMembers || !allMembers[0]) {
         console.error('Board not found');
         return;
