@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.lang.NonNull;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.RegisterRequest;
+import com.kanban.kanbanapp.dto.RegisterRequest;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.Model.enums.Role;
 

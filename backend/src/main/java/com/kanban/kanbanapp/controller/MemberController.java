@@ -1,6 +1,6 @@
 package com.kanban.kanbanapp.controller;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.MemberCreateRequest;
+import com.kanban.kanbanapp.dto.MemberCreateRequest;
 import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.Member;
 import com.kanban.kanbanapp.Model.User;
@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,32 +34,49 @@ public class MemberController {
     private final UserRepository userRepository;
 
     /**
-     * Retrieve all board members.
+     * Resolve the currently authenticated user from the security context.
+     *
+     * @return the authenticated User
+     * @throws RuntimeException if no matching user is found
+     */
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    /**
+     * Retrieve all members belonging to boards owned by the authenticated user.
      *
      * @return 200 with the list of members
      */
     @PreAuthorize("hasRole('ADMINISTRATOR')")
-    @Operation(summary = "Get all members", description = "Retrieve a list of all members")
+    @Operation(summary = "Get all members", description = "Retrieve a list of all members owned by the authenticated user")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Iterable<Member>> getAll() {
+        User user = getAuthenticatedUser();
 
-        Iterable<Member> membersIterable = memberRepository.findAll();
+        List<Member> members = memberRepository.findAllByBoard_User_Id(user.getId());
 
-        return ResponseEntity.status(HttpStatus.OK).body(membersIterable);
+        return ResponseEntity.status(HttpStatus.OK).body(members);
     }
 
     /**
      * Retrieve a single member by its ID.
+     * Returns 404 if the member does not exist or does not belong to a
+     * board owned by the authenticated user.
      *
      * @param id the member UUID
-     * @return 200 with the member, or 404 if not found
+     * @return 200 with the member, or 404 if not found/unauthorized
      */
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Get member by ID", description = "Retrieve a single member by its ID")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to retrieve", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @GetMapping("/{id}")
     public ResponseEntity<Member> getMemberById(@PathVariable(value = "id") @NonNull String id) {
-        Optional<Member> memberInDb = memberRepository.findById(id);
+        User user = getAuthenticatedUser();
+        Optional<Member> memberInDb = memberRepository.findByIdAndBoard_User_Id(id, user.getId());
         return memberInDb.map(member -> new ResponseEntity<>(member, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -69,17 +88,19 @@ public class MemberController {
      *
      * @param request creation payload (memberEmail, role, boardId)
      * @return 201 with the created member, 400 if email is blank, or 404 if the
-     *         board does not exist
+     *         board does not exist or is not owned by the authenticated user
      */
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @Operation(summary = "Create a new member", description = "Create a new member with specified details")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Member> create(@RequestBody @NonNull MemberCreateRequest request) {
-        Member member = new Member();
-        member.setMemberEmail(Optional.ofNullable(request.getMemberEmail()).orElse(""));
-        member.setMemberOrder(Optional.ofNullable(request.getMemberOrder()).orElse(0));
+        User authenticatedUser = getAuthenticatedUser();
 
-        String roleRequest = request.getRole();
+        Member member = new Member();
+        member.setMemberEmail(Optional.ofNullable(request.memberEmail()).orElse(""));
+        member.setMemberOrder(Optional.ofNullable(request.memberOrder()).orElse(0));
+
+        String roleRequest = request.role();
 
         if (roleRequest != null) {
             try {
@@ -91,10 +112,11 @@ public class MemberController {
             member.setRole(Role.STANDARD);
         }
 
-        // Associate with board if boardId is provided
-        if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
-            String boardId = java.util.Objects.requireNonNull(request.getBoardId());
-            Optional<Board> board = boardRepository.findById(boardId);
+        // Associate with board if boardId is provided, scoped to boards owned by the
+        // authenticated user so members cannot be created on another user's board
+        if (request.boardId() != null && !request.boardId().isEmpty()) {
+            String boardId = java.util.Objects.requireNonNull(request.boardId());
+            Optional<Board> board = boardRepository.findByIdAndUserId(boardId, authenticatedUser.getId());
             if (board.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
@@ -103,7 +125,7 @@ public class MemberController {
 
         // Resolve user by email (optional — user_id can be null for unregistered
         // invites)
-        String email = request.getMemberEmail();
+        String email = request.memberEmail();
         if (email != null && !email.isBlank()) {
             Optional<User> user = userRepository.findByEmail(email);
             user.ifPresent(member::setUser);
@@ -117,16 +139,20 @@ public class MemberController {
 
     /**
      * Delete a member by its ID.
+     * Returns 404 if the member does not exist or does not belong to a
+     * board owned by the authenticated user.
      *
      * @param id the member UUID
-     * @return 204 on success, or 404 if not found
+     * @return 204 on success, or 404 if not found/unauthorized
      */
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ID of the member to delete", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "member-id-123")))
     @Operation(summary = "Delete a member", description = "Delete a member by its ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") @NonNull String id) {
-        if (memberRepository.existsById(id)) {
+        User user = getAuthenticatedUser();
+        Optional<Member> memberInDb = memberRepository.findByIdAndBoard_User_Id(id, user.getId());
+        if (memberInDb.isPresent()) {
             memberRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         }
@@ -139,7 +165,7 @@ public class MemberController {
      * @param id      the member UUID
      * @param request updated member data (memberEmail, role, boardId)
      * @return 200 with the updated member, or 404 if not found or the referenced
-     *         board does not exist
+     *         board does not exist or is not owned by the authenticated user
      */
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update a member", description = "Update a member by its ID")
@@ -148,13 +174,14 @@ public class MemberController {
     public ResponseEntity<Member> update(@PathVariable(value = "id") @NonNull String id,
             @RequestBody @NonNull MemberCreateRequest request) {
 
-        Optional<Member> memberInDb = memberRepository.findById(id);
+        User user = getAuthenticatedUser();
+        Optional<Member> memberInDb = memberRepository.findByIdAndBoard_User_Id(id, user.getId());
 
         if (memberInDb.isPresent()) {
             Member memberToUpdate = memberInDb.get();
             memberToUpdate.setMemberEmail(
-                    Optional.ofNullable(request.getMemberEmail()).orElse(memberToUpdate.getMemberEmail()));
-            String roleRequest = request.getRole();
+                    Optional.ofNullable(request.memberEmail()).orElse(memberToUpdate.getMemberEmail()));
+            String roleRequest = request.role();
             if (roleRequest != null) {
                 try {
                     memberToUpdate.setRole(Role.valueOf(roleRequest.toUpperCase()));
@@ -165,10 +192,11 @@ public class MemberController {
                 memberToUpdate.setRole(Role.STANDARD);
             }
 
-            // Update board if boardId is provided
-            if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
-                String boardId = java.util.Objects.requireNonNull(request.getBoardId());
-                Optional<Board> board = boardRepository.findById(boardId);
+            // Update board if boardId is provided, scoped to boards owned by the
+            // authenticated user so a member cannot be moved to another user's board
+            if (request.boardId() != null && !request.boardId().isEmpty()) {
+                String boardId = java.util.Objects.requireNonNull(request.boardId());
+                Optional<Board> board = boardRepository.findByIdAndUserId(boardId, user.getId());
                 if (board.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
                 }

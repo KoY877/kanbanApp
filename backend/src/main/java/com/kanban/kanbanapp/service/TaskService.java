@@ -8,7 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.TaskCreateRequest;
+import com.kanban.kanbanapp.dto.TaskCreateRequest;
 import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.KanbanColumn;
 import com.kanban.kanbanapp.Model.Member;
@@ -43,24 +43,24 @@ public class TaskService {
      */
     @Transactional
     public Task createTask(@NonNull TaskCreateRequest request, @NonNull String userId) {
-        String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
+        String columnId = java.util.Objects.requireNonNull(request.columnId(), "Column ID cannot be null");
         KanbanColumn column = kanbanColumnRepository.findByIdAndBoard_User_Id(columnId, userId)
             .orElseThrow(() -> new AccessDeniedException("Column not found"));
 
         Board board = column.getBoard();
 
-        List<Member> assignedMembers = resolveMembers(request.getMembers(), board);
+        List<Member> assignedMembers = resolveMembers(request.members(), board);
 
         int currentCount = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(column.getId()).size();
         checkWipLimit(column, currentCount);
 
         Task task = new Task();
-        task.setName(request.getName().trim());
-        task.setDescription(request.getDescription());
-        task.setDate(request.getDate());
-        task.setTime(request.getTime());
-        task.setColors(safeList(request.getColors()));
-        task.setLabels(safeList(request.getLabels()));
+        task.setName(request.name().trim());
+        task.setDescription(request.description());
+        task.setDate(request.date());
+        task.setTime(request.time());
+        task.setColors(safeList(request.colors()));
+        task.setLabels(safeList(request.labels()));
         task.setMembers(assignedMembers);
         task.setColumn(column);
         task.setTaskOrder(currentCount);
@@ -159,22 +159,22 @@ public class TaskService {
         Task task = taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
             .orElseThrow(() -> new AccessDeniedException("Task not found"));
 
-        String columnId = java.util.Objects.requireNonNull(request.getColumnId(), "Column ID cannot be null");
+        String columnId = java.util.Objects.requireNonNull(request.columnId(), "Column ID cannot be null");
         KanbanColumn targetColumn = kanbanColumnRepository.findByIdAndBoard_User_Id(columnId, userId)
             .orElseThrow(() -> new AccessDeniedException("Column not found"));
 
         Board board = targetColumn.getBoard();
-        List<Member> assignedMembers = resolveMembers(request.getMembers(), board);
+        List<Member> assignedMembers = resolveMembers(request.members(), board);
 
         String oldColumnId = task.getColumn().getId();
         String newColumnId = targetColumn.getId();
 
-        task.setName(request.getName().trim());
-        task.setDescription(request.getDescription());
-        task.setDate(request.getDate());
-        task.setTime(request.getTime());
-        task.setColors(safeList(request.getColors()));
-        task.setLabels(safeList(request.getLabels()));
+        task.setName(request.name().trim());
+        task.setDescription(request.description());
+        task.setDate(request.date());
+        task.setTime(request.time());
+        task.setColors(safeList(request.colors()));
+        task.setLabels(safeList(request.labels()));
         task.setMembers(assignedMembers);
 
         if (!oldColumnId.equals(newColumnId)) {

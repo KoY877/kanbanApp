@@ -1,7 +1,6 @@
 package com.kanban.kanbanapp.controller;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.*;
-import com.kanban.kanbanapp.Data_Transfer_Object.PasswordManagement.ChangePasswordRequest;
+import com.kanban.kanbanapp.dto.*;
 import com.kanban.kanbanapp.Model.RefreshToken;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.UserRepository;
@@ -20,7 +19,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,18 +40,10 @@ import java.util.Arrays;
 public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private RefreshTokenService refreshTokenService;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final UserService userService;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
 
     @Value("${app.security.cookie.secure:false}")
     private boolean isProduction;
@@ -63,8 +53,18 @@ public class AuthController {
      *
      * @param passwordEncoder encoder used to verify/hash user passwords
      */
-    AuthController(PasswordEncoder passwordEncoder) {
+    AuthController(PasswordEncoder passwordEncoder,
+            UserService userService,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            UserRepository userRepository
+        ) {
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
+        this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
+        this.userRepository = userRepository;
+
     }
 
     @Operation(summary = "User login", description = """
@@ -92,7 +92,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request, HttpServletResponse response) {
-        User user = userService.validateUser(request.getEmail(), request.getPassword());
+        User user = userService.validateUser(request.email(), request.password());
 
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -113,14 +113,14 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         // Return ONLY the accessToken in the body (not the refreshToken)
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setAccessToken(accessToken);
-        authResponse.setRefreshToken(null); // Not returned in JSON
-        authResponse.setTokenType("Bearer");
-        authResponse.setUserId(user.getId());
-        authResponse.setUsername(user.getUsername());
-        authResponse.setEmail(user.getEmail());
-        authResponse.setRole(user.getRole().name());
+        AuthResponse authResponse = new AuthResponse(
+                accessToken,
+                null, // Not returned in JSON
+                "Bearer",
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name());
 
         return ResponseEntity.ok(authResponse);
     }
@@ -147,7 +147,7 @@ public class AuthController {
      *         invalid
      */
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request, HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request, HttpServletResponse response) {
         User user = userService.registerUser(request);
 
         String accessToken = jwtService.generateAccessToken(user);
@@ -164,14 +164,14 @@ public class AuthController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setAccessToken(accessToken);
-        authResponse.setRefreshToken(null); // Not returned in JSON
-        authResponse.setTokenType("Bearer");
-        authResponse.setUserId(user.getId());
-        authResponse.setUsername(user.getUsername());
-        authResponse.setEmail(user.getEmail());
-        authResponse.setRole(user.getRole().name());
+        AuthResponse authResponse = new AuthResponse(
+                accessToken,
+                null, // Not returned in JSON
+                "Bearer",
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
@@ -235,16 +235,16 @@ public class AuthController {
 
                     response.addHeader(HttpHeaders.SET_COOKIE, newRefreshCookie.toString());
 
-                    System.out.println("Refresh successful for user: " + user.getEmail());
+                    System.out.println("Refresh successful for user id: " + user.getId());
 
-                    AuthResponse authResponse = new AuthResponse();
-                    authResponse.setAccessToken(newAccessToken);
-                    authResponse.setRefreshToken(null); // Not returned in JSON
-                    authResponse.setTokenType("Bearer");
-                    authResponse.setUserId(user.getId());
-                    authResponse.setUsername(user.getUsername());
-                    authResponse.setEmail(user.getEmail());
-                    authResponse.setRole(user.getRole().name());
+                    AuthResponse authResponse = new AuthResponse(
+                            newAccessToken,
+                            null, // Not returned in JSON
+                            "Bearer",
+                            user.getId(),
+                            user.getUsername(),
+                            user.getEmail(),
+                            user.getRole().name());
                     return ResponseEntity.ok(authResponse);
                 })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
@@ -337,12 +337,12 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Verify current password
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // Update password
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
         // IMPORTANT: Revoke all existing tokens

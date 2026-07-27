@@ -1,39 +1,38 @@
 package com.kanban.kanbanapp.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class BoardDetailResponse {
+/**
+ * Response DTO representing a board with its columns and members.
+ *
+ * @param id          the board id
+ * @param name        the board name
+ * @param description the board description
+ * @param columns     the board's columns
+ * @param members     the board's members
+ */
+public record BoardDetailResponse(
+        String id,
+        String name,
+        String description,
+        List<ColumnDto> columns,
+        List<MemberDto> members) {
 
-    private String id;
-    private String name;
-    private String description;
-    private List<ColumnDto> columns;
-    private List<MemberDto> members;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ColumnDto {
-        private String id;
-        private String columnName;
-        private Integer columnOrder;
-        private Integer limitWorkInProgress;
+    /**
+     * @param id                  the column id
+     * @param columnName          the column name
+     * @param columnOrder         the column's display order
+     * @param limitWorkInProgress the column's WIP limit, or null for no limit
+     */
+    public record ColumnDto(String id, String columnName, Integer columnOrder, Integer limitWorkInProgress) {
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MemberDto {
-        private String id;
-        private String memberEmail;
-        private String role;
-        private Integer memberOrder;
+    /**
+     * @param id          the member id
+     * @param memberEmail the member's email
+     * @param role        the member's role
+     * @param memberOrder the member's display order
+     */
+    public record MemberDto(String id, String memberEmail, String role, Integer memberOrder) {
     }
 }

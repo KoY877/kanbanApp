@@ -154,7 +154,7 @@ public class RefreshTokenService {
         }
 
         // Valid token, proceed with normal rotation
-        System.out.println("Token rotation for user: " + oldToken.getUser().getEmail());
+        System.out.println("Token rotation for user id: " + oldToken.getUser().getId());
 
         // Mark the old token as revoked
         oldToken.setRevoked(true);

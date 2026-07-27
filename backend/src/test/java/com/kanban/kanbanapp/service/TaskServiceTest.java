@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.TaskCreateRequest;
+import com.kanban.kanbanapp.dto.TaskCreateRequest;
 import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.KanbanColumn;
 import com.kanban.kanbanapp.Model.Task;
@@ -69,10 +69,7 @@ class TaskServiceTest {
     }
 
     private TaskCreateRequest requestFor(String columnId) {
-        TaskCreateRequest request = new TaskCreateRequest();
-        request.setName("Write tests");
-        request.setColumnId(columnId);
-        return request;
+        return new TaskCreateRequest("Write tests", null, null, null, null, null, null, columnId);
     }
 
     // --- createTask ---

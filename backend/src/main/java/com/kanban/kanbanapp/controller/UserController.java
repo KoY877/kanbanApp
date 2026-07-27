@@ -1,6 +1,6 @@
 package com.kanban.kanbanapp.controller;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.UserResponse;
+import com.kanban.kanbanapp.dto.UserResponse;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.auth.UserService;

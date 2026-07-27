@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.TaskCreateRequest;
+import com.kanban.kanbanapp.dto.TaskCreateRequest;
 import com.kanban.kanbanapp.Model.Task;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.UserRepository;
@@ -168,6 +168,7 @@ public class TaskController {
      * Fields that are not included in the request will be set to null or default values, so the client must send all necessary fields.
      *
      * @param id the task ID
+     * 
      * @param request the updated task details
      * @return the updated task
      */

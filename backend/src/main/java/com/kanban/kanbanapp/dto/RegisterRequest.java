@@ -1,0 +1,22 @@
+package com.kanban.kanbanapp.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/**
+ * Request DTO for user registration.
+ *
+ * @param username the desired username (3-50 characters)
+ * @param email    the user's email address
+ * @param password the desired password (minimum 12 characters)
+ */
+@Schema(description = "Request DTO for user registration")
+public record RegisterRequest(
+        @Schema(description = "Username (3-50 characters)", example = "johndoe", nullable = false, minLength = 3, maxLength = 50) @NotBlank(message = "Le nom d'utilisateur est requis") @Size(min = 3, max = 50, message = "Le nom d'utilisateur doit contenir entre 3 et 50 caractères") String username,
+
+        @Schema(description = "User's email address", example = "john.doe@example.com", nullable = false) @NotBlank(message = "L'email est requis") @Email(message = "L'email doit être valide") String email,
+
+        @Schema(description = "User's password (minimum 12 characters)", example = "MyS3cur3P@ssw0rd!", nullable = false, minLength = 12) @NotBlank(message = "Le mot de passe est requis") @Size(min = 12, message = "Le mot de passe doit contenir au moins 12 caractères") String password) {
+}

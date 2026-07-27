@@ -1,6 +1,6 @@
 package com.kanban.kanbanapp.service.auth;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.RegisterRequest;
+import com.kanban.kanbanapp.dto.RegisterRequest;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.Model.enums.Role;
 import com.kanban.kanbanapp.repository.UserRepository;
@@ -118,17 +118,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public User registerUser(RegisterRequest request) {
         // Check if user already exists
-        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        Optional<User> existingUser = userRepository.findByEmail(request.email());
         if (existingUser.isPresent()) {
             log.error("Registration rejected - user already exists with id: {}", existingUser.get().getId());
-            throw new UserAlreadyExistsException(request.getEmail());
+            throw new UserAlreadyExistsException(request.email());
         }
 
         // Create new user
         User user = new User();
-        user.setEmail(request.getEmail());
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEmail(request.email());
+        user.setUsername(request.username());
+        user.setPassword(passwordEncoder.encode(request.password()));
 
         // All registered users get the Administrator role
         user.setRole(Role.ADMINISTRATOR);

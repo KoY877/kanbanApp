@@ -1,6 +1,6 @@
 package com.kanban.kanbanapp.exception;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.ErrorResponse;
+import com.kanban.kanbanapp.dto.ErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -34,13 +34,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ErrorResponse> handleExpiredJwtException(
             ExpiredJwtException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message("JWT token has expired")
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Unauthorized",
+                "JWT token has expired",
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -54,13 +53,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MalformedJwtException.class)
     public ResponseEntity<ErrorResponse> handleMalformedJwtException(
             MalformedJwtException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Bad Request")
-                .message("Malformed JWT token")
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Malformed JWT token",
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -74,13 +72,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SignatureException.class)
     public ResponseEntity<ErrorResponse> handleSignatureException(
             SignatureException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message("Invalid JWT signature")
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Unauthorized",
+                "Invalid JWT signature",
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -94,13 +91,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message("Authentication failed: " + ex.getMessage())
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Unauthorized",
+                "Authentication failed: " + ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -114,13 +110,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.FORBIDDEN.value())
-                .error("Forbidden")
-                .message("Access denied")
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                "Access denied",
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
@@ -134,13 +129,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
             BadCredentialsException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message("Invalid email or password")
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Unauthorized",
+                "Invalid email or password",
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
@@ -154,13 +148,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WipLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleWipLimitExceededException(
             WipLimitExceededException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.CONFLICT.value())
-                .error("Conflict")
-                .message(ex.getMessage())
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
@@ -174,13 +167,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Internal Server Error")
-                .message(ex.getMessage())
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -195,13 +187,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatusException(
                 ResponseStatusException ex, WebRequest request) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(ex.getStatusCode().value())
-                .error(ex.getReason() != null ? ex.getReason() : ex.getMessage())
-                .message(ex.getReason() != null ? ex.getReason() : ex.getMessage())
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                ex.getStatusCode().value(),
+                reason,
+                reason,
+                request.getDescription(false).replace("uri=", ""));
         return new ResponseEntity<>(error, ex.getStatusCode());
 }
 

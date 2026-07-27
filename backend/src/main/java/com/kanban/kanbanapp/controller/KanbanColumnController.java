@@ -1,6 +1,6 @@
 package com.kanban.kanbanapp.controller;
 
-import com.kanban.kanbanapp.Data_Transfer_Object.KanbanColumnCreateRequest;
+import com.kanban.kanbanapp.dto.KanbanColumnCreateRequest;
 import com.kanban.kanbanapp.Model.Board;
 import com.kanban.kanbanapp.Model.KanbanColumn;
 import com.kanban.kanbanapp.Model.User;
@@ -99,13 +99,13 @@ public class KanbanColumnController {
         User user = getAuthenticatedUser();
 
         KanbanColumn column = new KanbanColumn();
-        column.setColumnName(Optional.ofNullable(request.getColumnName()).orElse(""));
-        column.setLimitWorkInProgress(Optional.ofNullable(request.getLimitWorkInProgress()).orElse(null));
+        column.setColumnName(Optional.ofNullable(request.columnName()).orElse(""));
+        column.setLimitWorkInProgress(Optional.ofNullable(request.limitWorkInProgress()).orElse(null));
 
         // Associate with board if boardId is provided
-        if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
+        if (request.boardId() != null && !request.boardId().isEmpty()) {
             // Already validated as non-null and non-empty, assert it for null safety
-            String boardId = java.util.Objects.requireNonNull(request.getBoardId());
+            String boardId = java.util.Objects.requireNonNull(request.boardId());
             Optional<Board> board = boardRepository.findByIdAndUserId(boardId, user.getId());
             if (board.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -162,14 +162,14 @@ public class KanbanColumnController {
         if (columnInDb.isPresent()) {
             KanbanColumn columnToUpdate = columnInDb.get();
             columnToUpdate.setColumnName(
-                    Optional.ofNullable(request.getColumnName()).orElse(columnToUpdate.getColumnName()));
-            columnToUpdate.setLimitWorkInProgress(Optional.ofNullable(request.getLimitWorkInProgress())
+                    Optional.ofNullable(request.columnName()).orElse(columnToUpdate.getColumnName()));
+            columnToUpdate.setLimitWorkInProgress(Optional.ofNullable(request.limitWorkInProgress())
                     .orElse(columnToUpdate.getLimitWorkInProgress()));
 
             // Update board if boardId is provided
-            if (request.getBoardId() != null && !request.getBoardId().isEmpty()) {
+            if (request.boardId() != null && !request.boardId().isEmpty()) {
                 // Already validated as non-null and non-empty, assert it for null safety
-                String boardId = java.util.Objects.requireNonNull(request.getBoardId());
+                String boardId = java.util.Objects.requireNonNull(request.boardId());
                 Optional<Board> board = boardRepository.findByIdAndUserId(boardId, user.getId());
                 if (board.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -199,8 +199,8 @@ public class KanbanColumnController {
     @PreAuthorize("isAuthenticated()")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (columnName, limitWorkInProgress, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"columnName\": \"New Column Name\", \"limitWorkInProgress\": 5, \"boardId\": \"board-id-123\"}")))
     @Operation(summary = "Patch a column", description = "Partially update a column by its ID")
-    @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<KanbanColumn> patch(@RequestParam(value = "id") @NonNull String id,
+    @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<KanbanColumn> patch(@PathVariable(value = "id") @NonNull String id,
             @RequestBody @NonNull Map<String, Object> updates) {
 
         User user = getAuthenticatedUser();
