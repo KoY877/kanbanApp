@@ -20,7 +20,8 @@
                 "DB_USERNAME": "${env:DB_USERNAME}",
                 "DB_PASSWORD": "${env:DB_PASSWORD}",
                 "JWT_SECRET": "${env:JWT_SECRET}",
-                "ALLOWED_ORIGINS": "http://localhost:8084,http://localhost:4202"
+                "ALLOWED_ORIGINS": "http://localhost:8084,http://localhost:4202",
+                "SERVER_PORT": "8084"
             }
         }
     ]

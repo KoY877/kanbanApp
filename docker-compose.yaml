@@ -1,20 +1,19 @@
 name: kanbanapp
 
 services:
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb-dev
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-dev-2
     environment:
-      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-      MARIADB_DATABASE: tododb
-      MARIADB_USER: ${DB_USERNAME}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=tododb
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3309:3306"
+      - "5432:5432"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test:  ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d tododb"]
       interval: 5s
       retries: 5
 
@@ -24,13 +23,13 @@ services:
     ports:
       - "8084:8084"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/tododb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tododb
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: 3600000
     depends_on:
-      mariadb:
+      postgres:
         condition: service_healthy
     develop:
       watch:
@@ -55,6 +54,5 @@ services:
           path: ./frontend/package.json
 
 volumes:
-  mariadb_data:
-    external: true
-    name: todoapp_mariadb_data
+  postgres_data:
+    name: todoapp_postgres_data
