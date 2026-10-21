@@ -29,13 +29,28 @@ import lombok.RequiredArgsConstructor;
  */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CorsProperties corsProperties;
+
+    /**
+     * Create the security configuration with its required dependencies.
+     *
+     * @param jwtAuthenticationFilter the JWT authentication filter
+     * @param jwtAuthenticationEntryPoint the JWT authentication entry point
+     * @param corsProperties the CORS configuration properties
+     */
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            CorsProperties corsProperties) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.corsProperties = corsProperties;
+    }
 
     /**
      * Build the CORS configuration source from {@link CorsProperties}.

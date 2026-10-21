@@ -7,6 +7,7 @@ import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.repository.BoardRepository;
 import com.kanban.kanbanapp.repository.KanbanColumnRepository;
 import com.kanban.kanbanapp.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +43,7 @@ public class KanbanColumnController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     /**

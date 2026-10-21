@@ -8,7 +8,7 @@ import com.kanban.kanbanapp.repository.BoardRepository;
 import com.kanban.kanbanapp.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +23,8 @@ import java.util.List;
 
 @Tag(name = "Board Controller", description = "APIs for managing boards")
 @RestController
+@AllArgsConstructor 
 @RequestMapping("/boards")
-@RequiredArgsConstructor
 @Slf4j
 public class BoardController {
 

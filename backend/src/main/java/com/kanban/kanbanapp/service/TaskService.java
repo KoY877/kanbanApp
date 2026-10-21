@@ -18,15 +18,56 @@ import com.kanban.kanbanapp.repository.KanbanColumnRepository;
 import com.kanban.kanbanapp.repository.MemberRepository;
 import com.kanban.kanbanapp.repository.TaskRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class TaskService {
+
+    @Transactional
+    public com.kanban.kanbanapp.dto.TaskResponse moveTask(
+            String taskId, com.kanban.kanbanapp.dto.TaskMoveRequest request, String userId) {
+        Task task = taskRepository.findByIdAndColumn_Board_User_Id(taskId, userId)
+                .orElseThrow(() -> new AccessDeniedException("Task not found"));
+        KanbanColumn target = kanbanColumnRepository.findByIdAndBoard_User_Id(request.columnId(), userId)
+                .orElseThrow(() -> new AccessDeniedException("Column not found"));
+        KanbanColumn source = task.getColumn();
+        if (!source.getBoard().getId().equals(target.getBoard().getId())) {
+            throw new AccessDeniedException("Tasks must remain in the same board");
+        }
+        List<Task> targetTasks = new ArrayList<>(
+                taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(target.getId()));
+        targetTasks.removeIf(item -> item.getId().equals(taskId));
+        if (!source.getId().equals(target.getId())) {
+            checkWipLimit(target, targetTasks.size());
+        }
+        targetTasks.add(Math.min(request.position(), targetTasks.size()), task);
+        task.setColumn(target);
+        for (int index = 0; index < targetTasks.size(); index++) {
+            targetTasks.get(index).setTaskOrder(index);
+        }
+        taskRepository.saveAll(targetTasks);
+        if (!source.getId().equals(target.getId())) {
+            reorderColumnTasks(source.getId());
+        }
+        return com.kanban.kanbanapp.dto.TaskResponse.from(task);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.kanban.kanbanapp.dto.TaskResponse> getTaskResponsesByColumn(
+            @NonNull String columnId, @NonNull String userId) {
+        return getTasksByColumn(columnId, userId).stream()
+                .map(com.kanban.kanbanapp.dto.TaskResponse::from).toList();
+    }
 
     private final TaskRepository taskRepository;
     private final KanbanColumnRepository kanbanColumnRepository;
     private final MemberRepository memberRepository;
+
+    public TaskService(TaskRepository taskRepository,
+                       KanbanColumnRepository kanbanColumnRepository,
+                       MemberRepository memberRepository) {
+        this.taskRepository = taskRepository;
+        this.kanbanColumnRepository = kanbanColumnRepository;
+        this.memberRepository = memberRepository;
+    }
 
     /**
      * Create a new task in the given column, appending it at the end of the
@@ -97,7 +138,9 @@ public class TaskService {
         String validColumnId = java.util.Objects.requireNonNull(columnId, "Column ID cannot be null");
         kanbanColumnRepository.findByIdAndBoard_User_Id(validColumnId, userId)
             .orElseThrow(() -> new AccessDeniedException("Column not found"));
-        return taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(validColumnId);
+        List<Task> tasks = taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(validColumnId);
+        tasks.forEach(this::initializeTaskCollections);
+        return tasks;
     }
 
     /**
@@ -112,8 +155,17 @@ public class TaskService {
     @Transactional(readOnly = true)
     public Task getTaskById(@NonNull String taskId, @NonNull String userId) {
         String validTaskId = java.util.Objects.requireNonNull(taskId, "Task ID cannot be null");
-        return taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
+        Task task = taskRepository.findByIdAndColumn_Board_User_Id(validTaskId, userId)
             .orElseThrow(() -> new AccessDeniedException("Task not found"));
+        initializeTaskCollections(task);
+        return task;
+    }
+
+    /** Load response collections before the read transaction closes. */
+    private void initializeTaskCollections(Task task) {
+        org.hibernate.Hibernate.initialize(task.getColors());
+        org.hibernate.Hibernate.initialize(task.getLabels());
+        org.hibernate.Hibernate.initialize(task.getMembers());
     }
 
     /**

@@ -72,6 +72,59 @@ class TaskServiceTest {
         return new TaskCreateRequest("Write tests", null, null, null, null, null, null, columnId);
     }
 
+    @Test
+    void moveTask_changesColumnAndPreservesTaskData() {
+        Task task = new Task();
+        task.setId("task-1");
+        task.setName("Keep this task");
+        task.setDescription("Keep description");
+        task.setColors(List.of("#ffffe0"));
+        task.setColumn(column);
+        KanbanColumn target = new KanbanColumn();
+        target.setId("column-2");
+        target.setBoard(board);
+        when(taskRepository.findByIdAndColumn_Board_User_Id("task-1", OWNER_ID))
+                .thenReturn(Optional.of(task));
+        when(kanbanColumnRepository.findByIdAndBoard_User_Id("column-2", OWNER_ID))
+                .thenReturn(Optional.of(target));
+        when(taskRepository.findAllByColumn_IdOrderByTaskOrderAsc("column-2"))
+                .thenReturn(List.of());
+        when(taskRepository.findAllByColumn_IdOrderByTaskOrderAsc("column-1"))
+                .thenReturn(List.of());
+
+        var response = taskService.moveTask("task-1",
+                new com.kanban.kanbanapp.dto.TaskMoveRequest("column-2", 0), OWNER_ID);
+
+        assertThat(task.getColumn()).isSameAs(target);
+        assertThat(response.columnId()).isEqualTo("column-2");
+        assertThat(response.description()).isEqualTo("Keep description");
+        assertThat(response.colors()).containsExactly("#ffffe0");
+        verify(taskRepository).saveAll(List.of(task));
+    }
+
+    @Test
+    void moveTask_savesOrderWithinSameColumn() {
+        Task first = new Task();
+        first.setId("first");
+        first.setColumn(column);
+        Task second = new Task();
+        second.setId("second");
+        second.setColumn(column);
+        when(taskRepository.findByIdAndColumn_Board_User_Id("second", OWNER_ID))
+                .thenReturn(Optional.of(second));
+        when(kanbanColumnRepository.findByIdAndBoard_User_Id(column.getId(), OWNER_ID))
+                .thenReturn(Optional.of(column));
+        when(taskRepository.findAllByColumn_IdOrderByTaskOrderAsc(column.getId()))
+                .thenReturn(List.of(first, second));
+
+        taskService.moveTask("second",
+                new com.kanban.kanbanapp.dto.TaskMoveRequest(column.getId(), 0), OWNER_ID);
+
+        assertThat(second.getTaskOrder()).isZero();
+        assertThat(first.getTaskOrder()).isEqualTo(1);
+        verify(taskRepository).saveAll(List.of(second, first));
+    }
+
     // --- createTask ---
 
     @Test

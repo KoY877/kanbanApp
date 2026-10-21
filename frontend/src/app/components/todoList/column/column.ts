@@ -8,9 +8,10 @@ import { faPlus} from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { EntityService } from '../../../services/entity-service';
 import { CharacterPipe } from '../../../pipes/character-pipe';
-import { forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { CdkDragDrop, CdkDrag, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { FormatTextPipe } from '../../../pipes/format-text-pipe';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-column',
@@ -28,6 +29,9 @@ export class List implements OnChanges {
   selectedTask: any = null
   column : Column[] = []
   selectedColumnId: string = ''
+  taskLoadError = '';
+  taskMoveError = '';
+  isMovingTask = false;
 
   constructor(
     private message: Message,
@@ -55,6 +59,7 @@ export class List implements OnChanges {
    * respective column objects.
    */
   private loadTasksForColumns(): void {
+    this.taskLoadError = '';
     if (!this.column.length) return;
 
     // Initialize tasks as an empty array for each column
@@ -62,18 +67,35 @@ export class List implements OnChanges {
       if (!col.tasks) col.tasks = [];
     });
 
-    const requests = this.column.map(col =>
-      col.id ? this.entityService.getData<any>(`tasks/column/${col.id}`) : of([])
+    const columns = this.column;
+    const requests = columns.map(col =>
+      col.id ? this.entityService.getData<any>(`tasks/column/${col.id}`).pipe(
+        catchError(error => {
+          if (this.column === columns) {
+            this.taskLoadError = `Impossible de charger les tÃ¢ches de Â« ${col.columnName} Â» (HTTP ${error.status ?? '?'}).`;
+          }
+          console.error('Error loading tasks for column:', col.id, error);
+          return of(col.tasks ?? []);
+        })
+      ) : of([])
     );
 
     forkJoin(requests).subscribe({
       next: (taskArrays: any[]) => {
+        if (this.column !== columns) return;
         taskArrays.forEach((tasks, i) => {
           this.column[i] = { ...this.column[i], tasks: tasks || [] };
         });
         this.cdr.detectChanges();
       },
-      error: () => {},
+      error: (error) => {
+        const status = error instanceof HttpErrorResponse ? error.status : undefined;
+        this.taskLoadError = status === 0
+          ? 'Impossible de joindre le serveur pour charger les tÃ¢ches. VÃ©rifiez que le backend est dÃ©marrÃ©.'
+          : `Impossible de charger les tÃ¢ches${status ? ` (HTTP ${status})` : ''}. Consultez la rÃ©ponse de la requÃªte dans lâ€™onglet RÃ©seau du navigateur.`;
+        console.error('Error loading column tasks:', error);
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -99,15 +121,10 @@ export class List implements OnChanges {
       return;
     }
 
+    this.message.messageBooleanCloseAll(true);
     this.selectedColumnId = columnId;
     this.isOpenTaskModal = true
     this.isEditTask = false
-
-    // Close all open menu dropdowns
-    const dropdowns = this.elementRef.nativeElement.querySelectorAll('.menu-dropdown');
-    dropdowns.forEach((dropdown: any) => {
-      dropdown.classList.remove('active');
-    });
 
     // Register a click listener to detect clicks outside the modal
     const clickListener = (clickEvent: any) => {
@@ -148,52 +165,45 @@ export class List implements OnChanges {
   * @param event - the CDK drag-drop event
   */
  drop(event: CdkDragDrop<any[], any[]>) {
-  if (event.previousContainer === event.container) {
-    moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+  if (this.isMovingTask) return;
+  const source = event.previousContainer.data;
+  const destination = event.container.data;
+  const task = source[event.previousIndex];
+  const target = this.column.find(col => col.tasks === destination);
+  if (!task?.id || !target?.id) return;
+  if (source !== destination && target.limitWorkInProgress != null &&
+      destination.length >= target.limitWorkInProgress) return;
+
+  const sourceSnapshot = [...source];
+  const destinationSnapshot = [...destination];
+  if (source === destination) {
+    moveItemInArray(destination, event.previousIndex, event.currentIndex);
   } else {
-    const task = event.previousContainer.data[event.previousIndex];
-    const targetCol = this.column.find(col => col.tasks === event.container.data);
-    const targetColumnId = targetCol?.id;
-
-    // Check the WIP limit
-    if (targetCol?.limitWorkInProgress !== null && targetCol?.limitWorkInProgress !== undefined) {
-      const currentCount = event.container.data.length;
-      if (currentCount >= targetCol.limitWorkInProgress) {
-        return; // Limit reached -> cancel the drop
-      }
-    }
-
-    if (targetColumnId && task?.id) {
-      // Optimistic update
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
-
-      const taskPayload = {
-        ...task,
-        columnId: targetColumnId,
-        members: (task.members || []).map((member: any) => member?.id || member),
-        labels: (task.labels || []).map((label: any) => label?.name || label),
-      };
-
-      this.entityService.updateData(`tasks`, taskPayload).subscribe({
-        next: () => {},
-        error: (err) => {
-          transferArrayItem(
-            event.container.data,
-            event.previousContainer.data,
-            event.currentIndex,
-            event.previousIndex
-          );
-          console.error('Error moving task:', err);
-        }
-      });
-    }
+    transferArrayItem(source, destination, event.previousIndex, event.currentIndex);
   }
-}
+  this.isMovingTask = true;
+  this.taskMoveError = '';
+  this.entityService.putData<any>('tasks', `${task.id}/move`, {
+    columnId: target.id,
+    position: event.currentIndex,
+  }).subscribe({
+    next: updated => {
+      Object.assign(task, updated);
+      source.forEach((item, index) => item.taskOrder = index);
+      destination.forEach((item, index) => item.taskOrder = index);
+      this.isMovingTask = false;
+      this.cdr.detectChanges();
+    },
+    error: error => {
+      source.splice(0, source.length, ...sourceSnapshot);
+      if (source !== destination) destination.splice(0, destination.length, ...destinationSnapshot);
+      this.taskMoveError = 'Le déplacement n’a pas été enregistré. La tâche a été remise à sa place.';
+      this.isMovingTask = false;
+      console.error('Error moving task:', error);
+      this.cdr.detectChanges();
+    },
+  });
+ }
   /** CDK drop-list connection ids, one per column. */
   get connectedDropLists(): string[] {
     return this.column.map((_, i) => 'drop-list-' + i);
@@ -217,6 +227,7 @@ export class List implements OnChanges {
    * @param task - the task to edit
    */
   editTask(task: any) {
+    this.message.messageBooleanCloseAll(true);
     this.isEditTask = true;
     this.selectedTask = task;
     this.selectedColumnId = task.columnId;

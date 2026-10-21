@@ -200,6 +200,9 @@ export class Container implements OnInit {
   handleCloseAllDropdown(closeAll: boolean | undefined){
     if (closeAll=== true) {
       for (let i = 0; i < this.memberDropdown.length; i++) {
+
+        console.log( this.memberDropdown[i].isDropdown);
+
         if ( this.memberDropdown[i].isDropdown === true){
           this.memberDropdown[i].isDropdown = false
         }
@@ -237,7 +240,5 @@ export class Container implements OnInit {
 
     this.cdr.detectChanges();
   }
-
-
 
 }

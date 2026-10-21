@@ -212,7 +212,7 @@ export class Board {
     }
   }
 
-  /**
+  /** 
    * Handle opening a dropdown based on its name
    * @param dropdownName
    * @returns
@@ -221,6 +221,7 @@ export class Board {
     if (!dropdownName) return;
 
     if (dropdownName === 'editBoardName') {
+      this.closeSimpleDropdowns();
       this.isEditingBoardName = true;
       this.editedBoardName = this.clickedBoard?.name || '';
       this.cdr.detectChanges();
@@ -229,6 +230,9 @@ export class Board {
 
     // Use
     setTimeout(() => {
+
+      this.isEditingBoardName = false;
+      this.editedBoardName = '';
       // Toggle the clicked dropdown and close others (except search if it's open)
       this.isOpenDropdown = this.isOpenDropdown.map(dropdown => ({
         ...dropdown,
@@ -306,13 +310,19 @@ export class Board {
         return {
           ...dropdown,
           isDropdown: dropdown.name === identifier ? false : dropdown.isDropdown
+
         };
+
+        console.log(dropdown.name);
+
       }
 
       // identifier === false -> close all open dropdowns
       if (identifier === false && dropdown.isDropdown) {
         return { ...dropdown, isDropdown: false };
       }
+
+      console.log("Close: "+ dropdown.name);
 
       return dropdown;
     });

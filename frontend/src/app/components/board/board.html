@@ -3,6 +3,7 @@
     <div class="row">
       <div class="col-lg-12 col-md-12 flex align-item" >
         <ul >
+          <!-- Board title and rename controls -->
           <li>
             <div class="dropdown">
               <button
@@ -48,6 +49,7 @@
             </div>
           </li>
 
+          <!-- Board owner menu -->
           <li>
             <div class="dropdown">
               <button
@@ -68,6 +70,7 @@
               </div>
             </div>
           </li>
+          <!-- Board member menus -->
           <li *ngFor="let item of members; let i = index ;">
             <div class="dropdown" >
               <button
@@ -89,6 +92,7 @@
             </div>
           </li>
 
+          <!-- Member count and member search menu -->
           <li  *ngIf="members && members.length > 0">
             <div class="dropdown" >
               <button
@@ -112,6 +116,7 @@
             </div>
           </li>
 
+          <!-- Invite a new member -->
           <li>
             <div class="dropdown" >
               <button
@@ -175,14 +180,13 @@
   </div>
 </nav>
 
-
+<!-- Board columns -->
 <app-column
   *ngIf="clickedBoard"
   [clikedBoard]="currentBoard"
 ></app-column>
 
-
-
+<!-- Alert dialog -->
 <app-alert
   *ngIf="isAlert"
   (cancel)="handleCancel()"

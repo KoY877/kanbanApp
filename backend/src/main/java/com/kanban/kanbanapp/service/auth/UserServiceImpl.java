@@ -4,7 +4,6 @@ import com.kanban.kanbanapp.dto.RegisterRequest;
 import com.kanban.kanbanapp.Model.User;
 import com.kanban.kanbanapp.Model.enums.Role;
 import com.kanban.kanbanapp.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.lang.NonNull;
@@ -19,12 +18,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * {@inheritDoc}

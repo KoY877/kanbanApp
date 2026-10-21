@@ -224,8 +224,7 @@ public class MemberController {
     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Fields to update (memberEmail, role, boardId)", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"memberEmail\": \"newEmail@example.com\", \"role\": \"newRole\", \"boardId\": \"newBoardId\"}")))
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Member> patch(@PathVariable(value = "id") String id,
-        @RequestBody Map<String, Object> updates) 
-        {
+            @RequestBody Map<String, Object> updates) {
 
         return ResponseEntity.notFound().build();
     }

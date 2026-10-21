@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 @Tag(name = "Authentication Controller", description = "APIs for user authentication and token management")
 @CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081" })
 @RestController
+@RequiredArgsConstructor 
 @RequestMapping("/auth")
 public class AuthController {
 
@@ -48,25 +50,7 @@ public class AuthController {
     @Value("${app.security.cookie.secure:false}")
     private boolean isProduction;
 
-    /**
-     * Construct the controller with its required dependencies.
-     *
-     * @param passwordEncoder encoder used to verify/hash user passwords
-     */
-    AuthController(PasswordEncoder passwordEncoder,
-            UserService userService,
-            JwtService jwtService,
-            RefreshTokenService refreshTokenService,
-            UserRepository userRepository
-        ) {
-        this.passwordEncoder = passwordEncoder;
-        this.userService = userService;
-        this.jwtService = jwtService;
-        this.refreshTokenService = refreshTokenService;
-        this.userRepository = userRepository;
-
-    }
-
+ 
     @Operation(summary = "User login", description = """
             Authenticate user with email/password and return JWT tokens.
 

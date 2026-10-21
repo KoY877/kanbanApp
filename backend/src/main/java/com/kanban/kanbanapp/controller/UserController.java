@@ -6,7 +6,7 @@ import com.kanban.kanbanapp.repository.UserRepository;
 import com.kanban.kanbanapp.service.auth.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -23,11 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 @Tag(name = "User Controller", description = "APIs for managing users")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8081" }, allowCredentials = "true")
+@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8084" }, allowCredentials = "true")
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/user")
 @Validated
+@AllArgsConstructor 
 public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
@@ -107,7 +107,8 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update user profile", description = "Update the authenticated user's profile (username, email, password)")
     @PatchMapping("/profile/{id}")
-    public ResponseEntity<UserResponse> updateProfile(@PathVariable @NonNull String id, @RequestBody Map<String, String> updates) {
+    public ResponseEntity<UserResponse> updateProfile(@PathVariable @NonNull String id,
+            @RequestBody Map<String, String> updates) {
         User user = getAuthenticatedUser();
 
         // Partial update - only provided fields are updated
@@ -149,6 +150,6 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

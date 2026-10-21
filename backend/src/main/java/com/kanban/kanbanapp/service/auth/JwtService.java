@@ -8,6 +8,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;

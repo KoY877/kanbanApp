@@ -218,30 +218,26 @@ export class AddTask {
   handleDropdown(event: string) {
 
     // for Members
-if (event === 'member') {
-  if (this.isMembers === false) {
-    this.isMembers = true;
-    this.isLabels = false;
-    this.isDescription = false;
-    this.isEstimateTime = false;
+    if (event === 'member') {
+      if (this.isMembers === false) {
+        this.isMembers = true;
+        this.isLabels = false;
+        this.isDescription = false;
+        this.isEstimateTime = false;
 
-    // Load the board's members
-    this.members = this.currentBoard[0].members;
-
-    // In edit mode, mark the already-selected members as checked
-    if (this.isEditTask && this.selectedMembers.length > 0) {
-      this.members = this.members.map((member: any) => ({
-        ...member,
-        checked: this.selectedMembers.some((sm: any) =>
-          (sm.id || sm) === (member.id || member)
-        )
-      }));
+        // Keep checkbox state local to this task, without mutating board members.
+        this.members = (this.currentBoard?.[0]?.members ?? []).map((member: any) => ({
+          ...member,
+          checked: this.selectedMembers.some((selected: any) =>
+            (selected?.id || selected) === member.id ||
+            (selected?.memberEmail || selected) === member.memberEmail
+          )
+        }));
+      } else {
+        this.isMembers = false;
+      }
+      this.cdr.detectChanges();
     }
-  } else {
-    this.isMembers = false;
-  }
-  this.cdr.detectChanges();
-}
 
     // for Labels
     if (event === 'label') {
@@ -397,7 +393,7 @@ if (event === 'member') {
    * Build the task payload from the form and either update the task being
    * edited or create a new one.
    */
-  handleSubmitAddTask() {
+  handleSubmitAddTask(event: any) {
     if (this.form.get('name')?.invalid) return;
 
     const taskData = {
