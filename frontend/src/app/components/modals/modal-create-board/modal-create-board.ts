@@ -613,6 +613,7 @@ export class ModalCreateBoard {
 
       // Notify other components about the new board
       this.message.messageAny(response);
+      this.message.messageBoardCreated(response);
       this.message.messageOpenBoard(true);
 
       // Close modal

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
+import type { Board } from '../models/board.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,7 @@ export class Message {
   private openMembersDropdown = new BehaviorSubject<boolean>(false);
   private sendMessage = new BehaviorSubject<any>(null);
   private boardDeleted = new Subject<void>();
+  private boardCreated = new Subject<Board>();
   private profileUpdated = new Subject<{ username: string; email: string }>();
 
 
@@ -35,6 +37,7 @@ export class Message {
   openMembersDropdown$ = this.openMembersDropdown.asObservable();
   sendMessage$ = this.sendMessage.asObservable();
   boardDeleted$ = this.boardDeleted.asObservable();
+  boardCreated$ = this.boardCreated.asObservable();
   profileUpdated$ = this.profileUpdated.asObservable();
 
 
@@ -167,6 +170,11 @@ export class Message {
   /** Emit a board-deleted notification (e.g. to reload the board list) */
   messageBoardDeleted(): void {
     this.boardDeleted.next();
+  }
+
+  /** Notify menus after the board and its initial contents have been saved. */
+  messageBoardCreated(board: Board): void {
+    this.boardCreated.next(board);
   }
 
   /**

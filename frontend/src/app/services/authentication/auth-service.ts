@@ -63,8 +63,9 @@ export class AuthService {
       }),
       map(() => true),
       catchError((error) => {
-        console.warn('Cannot restore session (invalid/expired cookie or network error)');
-        console.error('Details:', error);
+        if (error.status !== 401) {
+          console.warn('Cannot restore session:', error);
+        }
         this.tokenService.clearAll();
         return of(false);
       })
@@ -106,14 +107,12 @@ export class AuthService {
         return response;
       }),
       catchError((err: any) => {
-        console.error('FAILED /auth/refresh call');
-        console.error('Status:', err.status);
-        console.error('Message:', err.message);
-        console.error('Body:', err.error);
+        if (err.status !== 401) {
+          console.error('FAILED /auth/refresh call:', err);
+        }
 
         // If the refresh fails (401), clear tokens and log out
         if (err.status === 401) {
-          console.warn('Invalid refresh token - clearing tokens');
           this.tokenService.clearAll();  // Clear from memory
         }
 

@@ -73,6 +73,15 @@ export class Header implements OnInit, OnDestroy {
     this.message.boardDeleted$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.loadBoards();
     });
+
+    this.message.boardCreated$.pipe(takeUntil(this.destroy$)).subscribe(board => {
+      const existingIndex = this.boards.findIndex(item => item.id === board.id);
+      this.boards = existingIndex < 0
+        ? [...this.boards, board]
+        : this.boards.map(item => item.id === board.id ? board : item);
+      this.activeIndex = board.name;
+      this.cdr.detectChanges();
+    });
   }
 
   /** Lifecycle hook to clean up all active subscriptions */

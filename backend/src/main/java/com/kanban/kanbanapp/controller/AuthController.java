@@ -50,6 +50,9 @@ public class AuthController {
     @Value("${app.security.cookie.secure:false}")
     private boolean isProduction;
 
+    @Value("${app.security.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
  
     @Operation(summary = "User login", description = """
             Authenticate user with email/password and return JWT tokens.
@@ -89,7 +92,7 @@ public class AuthController {
         ResponseCookie responseCookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true) // XSS protection
                 .secure(isProduction) // HTTPS in production
-                .sameSite("Lax") // CSRF protection
+                .sameSite(cookieSameSite)
                 .path("/") // Sent to all endpoints
                 .maxAge(7 * 24 * 60 * 60) // 7 days
                 .build();
@@ -141,7 +144,7 @@ public class AuthController {
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
                 .secure(isProduction)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
@@ -212,7 +215,7 @@ public class AuthController {
                     ResponseCookie newRefreshCookie = ResponseCookie.from("refreshToken", newRefreshToken.getToken())
                             .httpOnly(true)
                             .secure(isProduction)
-                            .sameSite("Lax")
+                            .sameSite(cookieSameSite)
                             .path("/")
                             .maxAge(7 * 24 * 60 * 60)
                             .build();
@@ -294,7 +297,7 @@ public class AuthController {
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(isProduction)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(0)
                 .build();
