@@ -1,9 +1,9 @@
 .modal-create-board {
   position: fixed;
-  /* Centrer dans l'espace sous le header de 45px, sans masquer le haut du modal. */
-  top: calc(50% + 22.5px);
+  /* Placer la modale juste sous le header de 45px. */
+  top: 61px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   width: calc(100% - 32px);
   max-width: 570px;
   border-radius: 10px;
@@ -13,6 +13,27 @@
   max-height: calc(100vh - 77px);
   max-height: calc(100dvh - 77px);
   overflow-y: auto;
+}
+
+.modal-content {
+  height: auto;
+  border-radius: inherit;
+}
+
+.modal-content .menu-dropdown {
+  /* Superposer les menus sans élargir ni déplacer la ligne des boutons. */
+  position: absolute;
+  top: 100%;
+  z-index: 1300;
+}
+
+/* Réserver de la place au menu ouvert tout en gardant une hauteur automatique. */
+.modal-content:has(.menu-dropdown.show) .task > form {
+  min-height: 440px;
+}
+
+.modal-board-info {
+  border-radius: inherit;
 }
 
 .btn-close {
