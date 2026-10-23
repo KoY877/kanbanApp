@@ -1,14 +1,18 @@
 .modal-create-board {
   position: fixed;
-  top: 35%;
+  /* Centrer dans l'espace sous le header de 45px, sans masquer le haut du modal. */
+  top: calc(50% + 22.5px);
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 50%;
+  width: calc(100% - 32px);
   max-width: 570px;
   border-radius: 10px;
   z-index: 1200;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  overflow: visible;
+  /* Garder 16px de marge en haut et en bas ; les longs formulaires défilent. */
+  max-height: calc(100vh - 77px);
+  max-height: calc(100dvh - 77px);
+  overflow-y: auto;
 }
 
 .btn-close {
