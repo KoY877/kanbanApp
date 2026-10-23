@@ -84,3 +84,16 @@
   margin-top: 10px;
   text-align: center;
 }
+
+/* Signaler visuellement que la requête de connexion est en cours. */
+.btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Respecter la préférence d'accessibilité sans masquer le message d'attente. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-border {
+    animation: none;
+  }
+}

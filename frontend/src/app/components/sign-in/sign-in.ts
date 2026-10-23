@@ -32,6 +32,8 @@ export class SignIn {
   isSignIn: boolean = true;
   form: FormGroup
   errorMessage: string = '';
+  // État propre au formulaire : active le spinner du bouton et désactive l'envoi.
+  isSubmitting = false;
 
   constructor(
     private formbuilder : FormBuilder,
@@ -59,12 +61,17 @@ export class SignIn {
    */
   async handleSignInSubmit(event: any){
     event?.preventDefault()
+    // Protéger aussi la méthode contre les envois répétés (clic ou touche Entrée).
+    if (this.isSubmitting) return;
     this.form.markAllAsTouched()
 
     if (this.form.invalid) {
       return;
     }
 
+    // Commencer l'attente uniquement après validation et effacer l'ancienne erreur.
+    this.isSubmitting = true;
+    this.errorMessage = '';
     try {
       const userData = this.form.value;
       const response = await lastValueFrom(this.auth.getUserByEmailAndPassword('auth/login', userData));
@@ -109,6 +116,11 @@ export class SignIn {
         this.errorMessage = 'Une erreur inattendue s\'est produite.';
       }
       this.cdr.detectChanges();
+    } finally {
+      // Toujours terminer l'attente, même si l'API échoue. Les champs sont conservés.
+      this.isSubmitting = false;
+      // Demander à Angular de réévaluer le bouton après la réponse asynchrone.
+      this.cdr.markForCheck();
     }
 
   }

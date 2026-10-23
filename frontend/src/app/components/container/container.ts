@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { SignUp } from "../sign-up/sign-up";
 import { ModalCreateBoard } from "../modals/modal-create-board/modal-create-board";
 import { Board } from "../board/board";
@@ -8,6 +8,7 @@ import { Message } from '../../services/message';
 import { TokenService } from '../../services/authentication/tokenService';
 import { CommonModule } from '@angular/common';
 import { SignIn } from '../sign-in/sign-in';
+import { Loading } from '../../services/loading';
 
 @Component({
   selector: 'app-container',
@@ -17,6 +18,8 @@ import { SignIn } from '../sign-in/sign-in';
   styleUrl: './container.css',
 })
 export class Container implements OnInit {
+  // Exposer le service au template pour lire son signal isLoading().
+  readonly loading = inject(Loading);
   // @Input () clickedBoard: Board | undefined;
   @Input() isCloseAllDropdown = false;
   @Output() closedDropdown:  EventEmitter<void> = new EventEmitter<void>()

@@ -5,6 +5,18 @@
     }"
     >
 
+  <!-- La zone reste présente pour éviter un décalage du contenu.
+       Le lecteur d'écran annonce le message sans interrompre l'utilisateur. -->
+  <div class="loading-status" role="status" aria-live="polite" aria-atomic="true">
+    @if (loading.isLoading()) {
+      <span class="loading-indicator">
+        <!-- Icône Bootstrap décorative : le texte fournit déjà l'information. -->
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>Loading…</span>
+      </span>
+    }
+  </div>
+
   <app-sign-in
     *ngIf="sign_in && !sign_up && !isConnected"
     (closeSignIn_OpenSignUp)="handleOpenSignUp()"

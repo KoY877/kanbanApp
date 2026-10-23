@@ -10,6 +10,30 @@
   min-height: 85vh;
 }
 
+/* Réserver la hauteur du message et centrer le spinner sans bloquer les clics. */
+.loading-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2.75rem;
+  pointer-events: none;
+}
+
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: #243c66;
+  font-size: 0.875rem;
+}
+
+/* Conserver l'indicateur et son texte, mais arrêter sa rotation si demandé. */
+@media (prefers-reduced-motion: reduce) {
+  .loading-indicator .spinner-border {
+    animation: none;
+  }
+}
+
 /* Position relative  */
 .container-fluid.container-board-open {
   position: relative;

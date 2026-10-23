@@ -13,10 +13,18 @@
                     <label for="password">Password:</label>
                     <input type="password" id="password" class="form-control" formControlName="password" name="password" required>
                   </div>
-                  <div class="error-message mb-3" *ngIf="errorMessage">{{ errorMessage }}</div>
+                  <div class="error-message mb-3" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
                   <div class="flex justify-content-end gap-2">
-                    <button type="submit" class="btn btn-primary">Sign In</button>
-                    <button type="button" class="btn btn-secondary" (click)="handleSignUpRedirect()">Sign Up</button>
+                    <!-- disabled bloque les clics ; aria-busy expose l'attente
+                         aux technologies d'assistance. -->
+                    <button type="submit" class="btn btn-primary" [disabled]="isSubmitting" [attr.aria-busy]="isSubmitting">
+                      @if (isSubmitting) {
+                        <!-- La rotation est décorative ; le libellé décrit l'action. -->
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      }
+                      <span aria-live="polite">{{ isSubmitting ? 'Signing in…' : 'Sign In' }}</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" [disabled]="isSubmitting" (click)="handleSignUpRedirect()">Sign Up</button>
                   </div>
                 </form>
             </div>
