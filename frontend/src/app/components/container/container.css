@@ -10,7 +10,7 @@
   min-height: 85vh;
 }
 
-/* Réserver la hauteur du message et centrer le spinner sans bloquer les clics. */
+/* Centrer le spinner dans la barre affichée pendant le chargement. */
 .loading-status {
   display: flex;
   justify-content: center;
